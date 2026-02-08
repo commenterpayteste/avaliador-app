@@ -1,22 +1,60 @@
 "use client"
+
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams, useRouter } from "next/navigation"
 
+const TEMPO_MAX = 10 * 60 // 10 minutos
+
 export default function EnviarComentario() {
   const { slotId } = useParams()
-  const [link, setLink] = useState("")
-  const [empresa, setEmpresa] = useState<any>(null)
   const router = useRouter()
+
+  const [empresa, setEmpresa] = useState<any>(null)
+  const [arquivo, setArquivo] = useState<File | null>(null)
+  const [tempoRestante, setTempoRestante] = useState<number>(TEMPO_MAX)
+  const [enviando, setEnviando] = useState(false)
+  const [expirado, setExpirado] = useState(false)
 
   useEffect(() => {
     fetchEmpresa()
+
+    // ⏱ cria início se não existir
+    const key = `inicio_${slotId}`
+    if (!localStorage.getItem(key)) {
+      localStorage.setItem(key, Date.now().toString())
+    }
+
+    iniciarTimer()
   }, [])
 
-  const fetchEmpresa = async () => {
+  function iniciarTimer() {
+    const key = `inicio_${slotId}`
+    const inicio = localStorage.getItem(key)
+
+    if (!inicio) return
+
+    const interval = setInterval(() => {
+      const passado = Math.floor((Date.now() - Number(inicio)) / 1000)
+      const restante = TEMPO_MAX - passado
+
+      if (restante <= 0) {
+        clearInterval(interval)
+        setTempoRestante(0)
+        setExpirado(true)
+        return
+      }
+
+      setTempoRestante(restante)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }
+
+  async function fetchEmpresa() {
     const { data, error } = await supabase
       .from("review_slots")
-      .select("status, expires_at, companies(nome, link_maps)")
+      .select("companies(nome, link_maps)")
       .eq("id", slotId)
       .single()
 
@@ -25,79 +63,127 @@ export default function EnviarComentario() {
       return
     }
 
-    // ⛔ proteção extra: expirou pelo tempo
-    if (new Date(data.expires_at) < new Date()) {
-      alert("⏳ Sua avaliação expirou. Você pode avaliar outra empresa.")
-      router.push("/dashboard")
-      return
-    }
-
     setEmpresa(data.companies)
   }
 
-  const enviar = async () => {
-    if (!link) return alert("Cole o link do comentário primeiro")
-
-    const { error } = await supabase.rpc("enviar_comentario", {
-      p_slot_id: slotId,
-      p_link: link,
-    })
-
-    if (error) {
-      if (
-        error.message.includes("Tempo expirado") ||
-        error.message.includes("reserva inválida")
-      ) {
-        alert("⏳ Sua avaliação expirou. Você pode avaliar outra empresa.")
-        router.push("/dashboard")
-        router.refresh()
-        return
-      }
-
-      alert(error.message)
+  async function enviar() {
+    if (!arquivo) {
+      alert("Envie o print do comentário.")
       return
     }
 
+    setEnviando(true)
+
+    const filePath = `reviews/${slotId}-${Date.now()}.png`
+
+    const { error: uploadError } = await supabase.storage
+      .from("reviews")
+      .upload(filePath, arquivo)
+
+    if (uploadError) {
+      alert(uploadError.message)
+      setEnviando(false)
+      return
+    }
+
+    const { data } = supabase.storage
+      .from("reviews")
+      .getPublicUrl(filePath)
+
+    const { error } = await supabase
+      .from("review_slots")
+      .update({
+        review_image_url: data.publicUrl,
+        status: "enviado",
+      })
+      .eq("id", slotId)
+
+    if (error) {
+      alert(error.message)
+      setEnviando(false)
+      return
+    }
+
+    localStorage.removeItem(`inicio_${slotId}`)
     router.push("/sucesso")
   }
 
-  return (
-    <div className="p-6 max-w-xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-center">Enviar avaliação</h1>
+  function formatarTempo(segundos: number) {
+    const m = Math.floor(segundos / 60)
+    const s = segundos % 60
+    return `${m}:${s.toString().padStart(2, "0")}`
+  }
 
+  return (
+    <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-8 max-w-xl mx-auto space-y-6 relative">
+
+      {/* MODAL EXPIRADO */}
+      {expirado && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 px-4">
+          <div className="bg-black rounded-2xl p-6 text-center border border-red-500 max-w-sm w-full">
+            <p className="text-red-400 text-lg font-bold mb-2">
+              ⏳ Tempo esgotado
+            </p>
+            <p className="text-sm text-gray-300 mb-4">
+              Sua vaga foi liberada para outro avaliador.
+            </p>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-full bg-green-400 text-black font-bold py-2 rounded-xl"
+            >
+              Voltar ao dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* TIMER */}
+      <div className="bg-black rounded-xl p-4 text-center border border-yellow-400">
+        ⏱ Tempo restante:{" "}
+        <span className="text-yellow-400 font-bold">
+          {formatarTempo(tempoRestante)}
+        </span>
+      </div>
+
+      {/* EMPRESA */}
       {empresa && (
-        <div className="bg-gray-100 p-4 rounded space-y-2 text-center">
-          <p>
-            Você avaliou a empresa:
-            <br />
-            <b>{empresa.nome}</b>
+        <div className="bg-black rounded-xl p-4 text-center space-y-2">
+          <p className="text-gray-300">Empresa avaliada:</p>
+          <p className="text-green-400 font-bold text-lg">
+            {empresa.nome}
           </p>
 
           <a
             href={empresa.link_maps}
             target="_blank"
-            className="bg-yellow-500 text-black px-4 py-2 rounded inline-block"
+            className="inline-block bg-green-400 text-black px-4 py-2 rounded-lg font-bold"
           >
-            🔍 Abrir novamente no Google Maps
+            Abrir no Google Maps
           </a>
         </div>
       )}
 
-      <div className="space-y-2">
-        <label className="font-medium">Cole o link do seu comentário:</label>
+      {/* UPLOAD */}
+      <div className="bg-black rounded-xl p-4 space-y-3">
+        <p className="text-sm text-gray-300">
+          Envie um PRINT do comentário publicado.
+        </p>
+
         <input
-          placeholder="https://g.page/..."
-          value={link}
-          onChange={(e) => setLink(e.target.value)}
-          className="border p-2 w-full rounded"
+          type="file"
+          accept="image/*"
+          onChange={(e) => setArquivo(e.target.files?.[0] || null)}
+          className="w-full text-sm"
         />
       </div>
 
+      {/* BOTÃO */}
       <button
         onClick={enviar}
-        className="w-full bg-blue-600 text-white px-4 py-3 rounded text-lg"
+        disabled={enviando || expirado}
+        className="w-full bg-green-400 text-black font-bold py-3 rounded-xl disabled:opacity-50"
       >
-        Enviar para análise
+        {enviando ? "Enviando..." : "Enviar para análise"}
       </button>
     </div>
   )
