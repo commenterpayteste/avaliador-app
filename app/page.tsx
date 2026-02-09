@@ -38,11 +38,17 @@ export default function Home() {
         </p>
       </div>
 
-      {/* CARD VÍDEO */}
-      <div className="w-full max-w-sm bg-black rounded-3xl flex items-center justify-center flex-1 my-6">
-        <p className="text-gray-400 text-sm">
-          URL VIDEO FUTURAMENTE
-        </p>
+      {/* VSL */}
+      <div className="w-full max-w-sm rounded-3xl overflow-hidden my-6 bg-black">
+        <div className="relative w-full pt-[177%]"> 
+          {/* 9:16 (vertical, mobile first) */}
+          <iframe
+            src="https://player-vz-c9c39116-458.tv.pandavideo.com.br/embed/?v=b8ec25a8-2d70-4184-abdb-9a16a18b6d34"
+            className="absolute top-0 left-0 w-full h-full"
+            allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
       </div>
 
       {/* WIDGET CONFIANÇA */}
@@ -64,11 +70,7 @@ export default function Home() {
         </div>
 
         <div className="flex items-center justify-center gap-2 text-xs text-gray-400 pt-2 border-t border-[#1f1f1f]">
-          <img
-            src="/icons/google.svg"
-            alt="Google"
-            className="w-4 h-4"
-          />
+          <img src="/icons/google.svg" alt="Google" className="w-4 h-4" />
           Empresas verificadas pelo Google • 2026
         </div>
       </div>
