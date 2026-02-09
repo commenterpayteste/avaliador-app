@@ -211,7 +211,7 @@ export default function Dados() {
 
       {/* SUPORTE */}
       <button
-        onClick={() => window.open("https://wa.me/5500000000000", "_blank")}
+        onClick={() => window.open("https://wa.me/5582996265512", "_blank")}
         className="w-full bg-[#1c1c1c] border border-gray-700 py-3 rounded-xl text-sm text-gray-300"
       >
         💬 Conversar com suporte
