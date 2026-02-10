@@ -98,12 +98,27 @@ export default function Sucesso() {
           </p>
 
           <input
-            type="tel"
-            placeholder="WhatsApp com DDD (ex: 11999999999)"
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
-            className="w-full rounded-xl px-4 py-3 text-black text-center"
-          />
+  type="tel"
+  placeholder="WhatsApp com DDD (ex: 11999999999)"
+  value={whatsapp}
+  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
+  className="
+    w-full
+    rounded-xl
+    px-4
+    py-3
+    text-white
+    text-center
+    bg-[#0f0f0f]
+    border
+    border-white/20
+    placeholder:text-gray-400
+    focus:outline-none
+    focus:ring-2
+    focus:ring-green-400
+  "
+/>
+
 
           <button
             onClick={salvarWhatsapp}

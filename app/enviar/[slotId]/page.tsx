@@ -177,7 +177,7 @@ export default function EnviarComentario() {
           className="cursor-pointer flex flex-col items-center justify-center gap-2 border-2 border-green-400 rounded-2xl p-6 hover:bg-green-400/10 transition"
         >
           <img
-            src="/icons/camera.png"
+            src="/icons/image.png"
             alt="Enviar imagem"
             className="w-12 h-12"
           />
