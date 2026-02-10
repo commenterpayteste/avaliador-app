@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams, useRouter } from "next/navigation"
 
@@ -9,6 +9,7 @@ const TEMPO_MAX = 10 * 60 // 10 minutos
 export default function EnviarComentario() {
   const { slotId } = useParams()
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [empresa, setEmpresa] = useState<any>(null)
   const [arquivo, setArquivo] = useState<File | null>(null)
@@ -19,7 +20,6 @@ export default function EnviarComentario() {
   useEffect(() => {
     fetchEmpresa()
 
-    // ⏱ cria início se não existir
     const key = `inicio_${slotId}`
     if (!localStorage.getItem(key)) {
       localStorage.setItem(key, Date.now().toString())
@@ -31,7 +31,6 @@ export default function EnviarComentario() {
   function iniciarTimer() {
     const key = `inicio_${slotId}`
     const inicio = localStorage.getItem(key)
-
     if (!inicio) return
 
     const interval = setInterval(() => {
@@ -115,7 +114,7 @@ export default function EnviarComentario() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-8 max-w-xl mx-auto space-y-6 relative">
+    <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-8 max-w-xl mx-auto space-y-6">
 
       {/* MODAL EXPIRADO */}
       {expirado && (
@@ -163,17 +162,41 @@ export default function EnviarComentario() {
         </div>
       )}
 
-      {/* UPLOAD */}
-      <div className="bg-black rounded-xl p-4 space-y-3">
-        <p className="text-sm text-gray-300">
-          Envie um PRINT do comentário publicado.
+      {/* UPLOAD BONITÃO */}
+      <div className="bg-black rounded-2xl p-6 space-y-4 text-center border border-[#1f1f1f]">
+        <p className="text-lg font-semibold">
+          Oba! 🎉
+        </p>
+        <p className="text-sm text-gray-400">
+          Agora é só enviar a foto do seu comentário publicado.
+          Nossa equipe irá analisar em breve.
         </p>
 
+        <label
+          onClick={() => fileInputRef.current?.click()}
+          className="cursor-pointer flex flex-col items-center justify-center gap-2 border-2 border-green-400 rounded-2xl p-6 hover:bg-green-400/10 transition"
+        >
+          <img
+            src="/icons/camera.png"
+            alt="Enviar imagem"
+            className="w-12 h-12"
+          />
+          <span className="text-green-400 text-sm font-semibold">
+            Clique aqui para selecionar a imagem
+          </span>
+          {arquivo && (
+            <span className="text-xs text-gray-400">
+              {arquivo.name}
+            </span>
+          )}
+        </label>
+
         <input
+          ref={fileInputRef}
           type="file"
           accept="image/*"
           onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-          className="w-full text-sm"
+          className="hidden"
         />
       </div>
 
