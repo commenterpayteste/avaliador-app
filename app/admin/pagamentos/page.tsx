@@ -15,10 +15,23 @@ type Saque = {
   paid_at?: string
 }
 
+type UsuarioSaldo = {
+  user_id: string
+  usuario: string
+  email: string
+  pix_tipo: string
+  pix_key: string
+  saldo_disponivel: number
+  saldo_total: number
+}
+
 export default function PagamentosAdmin() {
   const [saques, setSaques] = useState<Saque[]>([])
+  const [usuarios, setUsuarios] = useState<UsuarioSaldo[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtro, setFiltro] = useState<"pendente" | "pago">("pendente")
+  const [filtro, setFiltro] = useState<"pendente" | "pago" | "usuarios">(
+    "pendente"
+  )
   const router = useRouter()
 
   useEffect(() => {
@@ -26,7 +39,7 @@ export default function PagamentosAdmin() {
   }, [])
 
   useEffect(() => {
-    carregarSaques()
+    carregarDados()
   }, [filtro])
 
   async function verificarAdmin() {
@@ -51,20 +64,33 @@ export default function PagamentosAdmin() {
       return
     }
 
-    carregarSaques()
+    carregarDados()
   }
 
-  async function carregarSaques() {
+  async function carregarDados() {
     setLoading(true)
+
+    if (filtro === "usuarios") {
+      const { data, error } = await supabase
+        .from("vw_admin_usuarios_saldos")
+        .select("*")
+
+      if (error) {
+        alert(error.message)
+        return
+      }
+
+      setUsuarios(data || [])
+      setLoading(false)
+      return
+    }
 
     const tabela =
       filtro === "pendente"
         ? "vw_admin_pagamentos"
         : "vw_admin_pagamentos_pagos"
 
-    const { data, error } = await supabase
-      .from(tabela)
-      .select("*")
+    const { data, error } = await supabase.from(tabela).select("*")
 
     if (error) {
       alert(error.message)
@@ -88,7 +114,31 @@ export default function PagamentosAdmin() {
       return
     }
 
-    carregarSaques()
+    carregarDados()
+  }
+
+  async function pagarSaldo(userId: string, valor: number) {
+    const ok = confirm(
+      `Confirmar pagamento manual de ${valor.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      })}?`
+    )
+    if (!ok) return
+
+    const { error } = await supabase.rpc(
+      "admin_pagar_saldo_disponivel",
+      {
+        p_user_id: userId,
+      }
+    )
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    carregarDados()
   }
 
   function formatarValor(valor: number) {
@@ -105,7 +155,7 @@ export default function PagamentosAdmin() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
-        Carregando pagamentos…
+        Carregando…
       </div>
     )
   }
@@ -118,77 +168,113 @@ export default function PagamentosAdmin() {
 
       {/* FILTROS */}
       <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setFiltro("pendente")}
-          className={`px-4 py-2 rounded-lg font-semibold ${
-            filtro === "pendente"
-              ? "bg-green-400 text-black"
-              : "bg-[#1c1c1c] text-white"
-          }`}
-        >
-          Pendentes
-        </button>
-
-        <button
-          onClick={() => setFiltro("pago")}
-          className={`px-4 py-2 rounded-lg font-semibold ${
-            filtro === "pago"
-              ? "bg-green-400 text-black"
-              : "bg-[#1c1c1c] text-white"
-          }`}
-        >
-          Pagos
-        </button>
+        {["pendente", "pago", "usuarios"].map((f) => (
+          <button
+            key={f}
+            onClick={() => setFiltro(f as any)}
+            className={`px-4 py-2 rounded-lg font-semibold ${
+              filtro === f
+                ? "bg-green-400 text-black"
+                : "bg-[#1c1c1c] text-white"
+            }`}
+          >
+            {f === "pendente"
+              ? "Pendentes"
+              : f === "pago"
+              ? "Pagos"
+              : "Usuários"}
+          </button>
+        ))}
       </div>
 
-      {saques.length === 0 ? (
-        <p className="text-gray-400">
-          Nenhum saque {filtro === "pendente" ? "pendente" : "pago"}.
-        </p>
-      ) : (
+      {/* ABA USUÁRIOS */}
+      {filtro === "usuarios" && (
         <div className="space-y-4">
-          {saques.map((s) => (
-            <div
-              key={s.id}
-              className="bg-black rounded-xl p-4 flex justify-between items-center"
-            >
-              <div className="text-sm space-y-1">
-                <p className="font-semibold text-green-400">
-                  {s.usuario}
-                </p>
-                <p className="text-gray-400">{s.email}</p>
-                <p>
-                  PIX: {s.pix_tipo.toUpperCase()} • {s.pix_key}
-                </p>
-
-                <p className="text-xs text-gray-500">
-                  Solicitado em {formatarData(s.created_at)}
-                </p>
-
-                {filtro === "pago" && s.paid_at && (
-                  <p className="text-xs text-gray-500">
-                    Pago em {formatarData(s.paid_at)}
+          {usuarios.length === 0 ? (
+            <p className="text-gray-400">
+              Nenhum usuário com saldo disponível.
+            </p>
+          ) : (
+            usuarios.map((u) => (
+              <div
+                key={u.user_id}
+                className="bg-black rounded-xl p-4 flex justify-between items-center"
+              >
+                <div className="text-sm space-y-1">
+                  <p className="font-semibold text-green-400">
+                    {u.usuario}
                   </p>
-                )}
-              </div>
+                  <p className="text-gray-400">{u.email}</p>
+                  <p>
+                    PIX: {u.pix_tipo.toUpperCase()} • {u.pix_key}
+                  </p>
+                </div>
 
-              <div className="text-right space-y-2">
-                <p className="text-lg font-bold">
-                  {formatarValor(s.valor)}
-                </p>
-
-                {filtro === "pendente" && (
+                <div className="text-right space-y-2">
+                  <p className="text-lg font-bold">
+                    {formatarValor(u.saldo_disponivel)}
+                  </p>
                   <button
-                    onClick={() => marcarPago(s.id)}
+                    onClick={() =>
+                      pagarSaldo(u.user_id, u.saldo_disponivel)
+                    }
                     className="bg-green-400 text-black px-4 py-2 rounded-lg font-bold"
                   >
-                    MARCAR COMO PAGO
+                    PAGAR MANUALMENTE
                   </button>
-                )}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
+      )}
+
+      {/* ABA SAQUES */}
+      {filtro !== "usuarios" && (
+        <>
+          {saques.length === 0 ? (
+            <p className="text-gray-400">
+              Nenhum saque {filtro === "pendente" ? "pendente" : "pago"}.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {saques.map((s) => (
+                <div
+                  key={s.id}
+                  className="bg-black rounded-xl p-4 flex justify-between items-center"
+                >
+                  <div className="text-sm space-y-1">
+                    <p className="font-semibold text-green-400">
+                      {s.usuario}
+                    </p>
+                    <p className="text-gray-400">{s.email}</p>
+                    <p>
+                      PIX: {s.pix_tipo.toUpperCase()} • {s.pix_key}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Solicitado em {formatarData(s.created_at)}
+                    </p>
+                  </div>
+
+                  <div className="text-right space-y-2">
+                    <p className="text-lg font-bold">
+                      {formatarValor(s.valor)}
+                    </p>
+
+                    {filtro === "pendente" && (
+                      <button
+                        onClick={() => marcarPago(s.id)}
+                        className="bg-green-400 text-black px-4 py-2 rounded-lg font-bold"
+                      >
+                        MARCAR COMO PAGO
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
