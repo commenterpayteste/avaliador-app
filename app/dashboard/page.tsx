@@ -180,7 +180,7 @@ export default function Dashboard() {
     </p>
 
     <a
-      href="https://wa.link/51hzpk"
+      href="https://wa.link/sjoe8h"
       target="_blank"
       className="block w-full text-center bg-green-500 hover:bg-green-600 transition text-black font-bold py-2 rounded-xl text-sm"
     >

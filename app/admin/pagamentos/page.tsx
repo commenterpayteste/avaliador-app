@@ -206,8 +206,10 @@ export default function PagamentosAdmin() {
                   </p>
                   <p className="text-gray-400">{u.email}</p>
                   <p>
-                    PIX: {u.pix_tipo.toUpperCase()} • {u.pix_key}
-                  </p>
+  PIX: {u.pix_tipo ? u.pix_tipo.toUpperCase() : "—"} •{" "}
+  {u.pix_key || "—"}
+</p>
+
                 </div>
 
                 <div className="text-right space-y-2">
