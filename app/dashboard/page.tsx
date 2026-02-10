@@ -164,6 +164,30 @@ export default function Dashboard() {
     className="h-10 object-contain"
   />
 </header>
+{/* AVISO DE TESTES */}
+<div className="mx-4 mb-6">
+  <div className="border-2 border-orange-500 rounded-2xl p-4 bg-[#1a1a1a] animate-pulse">
+
+    <div className="flex items-center justify-center gap-2 mb-2">
+      <span className="text-orange-400 text-sm font-bold">
+        🚨 ESTAMOS EM FASE DE TESTES 🚨
+      </span>
+    </div>
+
+    <p className="text-center text-xs text-gray-300 mb-4">
+      Se encontrar qualquer erro ou quiser ajudar com dicas,
+      clique no botão abaixo para falar com nossa equipe.
+    </p>
+
+    <a
+      href="https://wa.link/51hzpk"
+      target="_blank"
+      className="block w-full text-center bg-green-500 hover:bg-green-600 transition text-black font-bold py-2 rounded-xl text-sm"
+    >
+      Clique e entre no nosso grupo para ganhar mais!
+    </a>
+  </div>
+</div>
 
 
       {/* MISSÃO ATIVA */}
