@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 
 type Etapa = "idle" | "popup1" | "confirmar" | "popup2" | "tempo_esgotado"
 
-const TEMPO_MAX = 10 * 60
+const TEMPO_MAX = 10 * 60 // 10 minutos
 const CACHE_KEY = "empresas_cache"
 
 export default function Dashboard() {
@@ -16,12 +16,9 @@ export default function Dashboard() {
   const [missaoAtiva, setMissaoAtiva] = useState(false)
   const [tempoRestante, setTempoRestante] = useState<number | null>(null)
   const [desistindo, setDesistindo] = useState(false)
-  const [carregandoEmpresas, setCarregandoEmpresas] = useState(true)
 
-  // 🔥 NOVOS ESTADOS (ISOLADOS)
-  const [mostrarModalWhatsapp, setMostrarModalWhatsapp] = useState(false)
-  const [whatsappInput, setWhatsappInput] = useState("")
-  const [salvandoWhatsapp, setSalvandoWhatsapp] = useState(false)
+  // 🔥 NOVOS
+  const [carregandoEmpresas, setCarregandoEmpresas] = useState(true)
 
   const router = useRouter()
 
@@ -29,6 +26,7 @@ export default function Dashboard() {
     init()
   }, [])
 
+  // TIMER
   useEffect(() => {
     if (!slotId) return
 
@@ -72,11 +70,13 @@ export default function Dashboard() {
         localStorage.setItem(`inicio_${missao.id}`, Date.now().toString())
       }
     } else {
+      // 🔥 tenta cache primeiro
       const cache = localStorage.getItem(CACHE_KEY)
       if (cache) {
         setEmpresas(JSON.parse(cache))
         setCarregandoEmpresas(false)
       }
+
       fetchEmpresas()
     }
   }
@@ -93,6 +93,7 @@ export default function Dashboard() {
       localStorage.setItem(CACHE_KEY, JSON.stringify(data))
     }
 
+    // delay fake pra UX premium
     setTimeout(() => {
       setCarregandoEmpresas(false)
     }, 600)
@@ -120,6 +121,7 @@ export default function Dashboard() {
     if (!slotId || desistindo) return
 
     setDesistindo(true)
+
     try {
       await supabase.rpc("desistir_avaliacao", { p_slot_id: slotId })
     } finally {
@@ -153,59 +155,159 @@ export default function Dashboard() {
     return `${m}:${s.toString().padStart(2, "0")}`
   }
 
-  // 🔒 INTERCEPTAÇÃO SEGURA
-  async function handleResgatar() {
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) return
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("whatsapp")
-      .eq("id", data.user.id)
-      .maybeSingle()
-
-    if (!profile?.whatsapp) {
-      setMostrarModalWhatsapp(true)
-      return
-    }
-
-    router.push(`/enviar/${slotId}`)
-  }
-
-  async function salvarWhatsapp() {
-    const numeroLimpo = whatsappInput.replace(/\D/g, "")
-
-    if (numeroLimpo.length < 10 || numeroLimpo.length > 11) {
-      alert("Digite um WhatsApp válido com DDD (10 ou 11 números).")
-      return
-    }
-
-    setSalvandoWhatsapp(true)
-
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) return
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ whatsapp: numeroLimpo })
-      .eq("id", data.user.id)
-
-    if (error) {
-      alert(error.message)
-      setSalvandoWhatsapp(false)
-      return
-    }
-
-    setMostrarModalWhatsapp(false)
-    setSalvandoWhatsapp(false)
-
-    router.push(`/enviar/${slotId}`)
-  }
-
   return (
     <div className="min-h-screen bg-[#121212] text-white pb-28">
+     <header className="py-6 flex justify-center">
+  <img
+    src="/icons/commenter1.png"
+    alt="Commenter Pay"
+    className="h-10 object-contain"
+  />
+</header>
+{/* AVISO DE TESTES */}
+<div className="mx-4 mb-6">
+  <div className="border-2 border-orange-500 rounded-2xl p-4 bg-[#1a1a1a] animate-pulse">
 
-      {/* ... TODO SEU CÓDIGO ORIGINAL PERMANECE IGUAL ... */}
+    <div className="flex items-center justify-center gap-2 mb-2">
+      <span className="text-orange-400 text-sm font-bold">
+        🚨 ESTAMOS EM FASE DE TESTES 🚨
+      </span>
+    </div>
+
+    <p className="text-center text-xs text-gray-300 mb-4">
+      Se encontrar qualquer erro ou quiser ajudar com dicas,
+      clique no botão abaixo para falar com nossa equipe.
+    </p>
+
+    <a
+      href="https://wa.link/sjoe8h"
+      target="_blank"
+      className="block w-full text-center bg-green-500 hover:bg-green-600 transition text-black font-bold py-2 rounded-xl text-sm"
+    >
+      Clique e entre no nosso grupo para ganhar mais!
+    </a>
+  </div>
+</div>
+
+
+      {/* MISSÃO ATIVA */}
+      {missaoAtiva && empresaAtiva && etapa === "idle" && (
+        <div className="mx-4 mb-4 bg-[#1f3a2a] border border-[#1DB954] rounded-xl p-4">
+          <p className="text-sm text-[#1DB954] font-semibold">
+            ⏳ Avaliação pendente —{" "}
+            {tempoRestante !== null && formatarTempo(tempoRestante)}
+          </p>
+
+          <p className="text-xs text-gray-300 mb-3">
+            {empresaAtiva.nome}
+          </p>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setEtapa("confirmar")}
+              className="flex-1 bg-[#1DB954] text-black py-2 rounded-full font-bold"
+            >
+              Continuar
+            </button>
+
+            <button
+              disabled={desistindo}
+              onClick={desistir}
+              className="flex-1 bg-red-600 py-2 rounded-full font-bold disabled:opacity-50"
+            >
+              {desistindo ? "Cancelando..." : "Desistir"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* LISTA */}
+      {!missaoAtiva && (
+        <div className="px-4 space-y-4">
+          {carregandoEmpresas && (
+            <>
+              <LoadingCard />
+              <LoadingCard />
+              <LoadingCard />
+            </>
+          )}
+
+          {!carregandoEmpresas &&
+            empresas.map((e) => (
+              <div
+                key={e.id}
+                className="bg-[#181818] border border-[#2a2a2a] rounded-2xl p-4"
+              >
+                <h2 className="font-semibold">{e.nome}</h2>
+                <p className="text-sm text-gray-400">
+                  Vagas: {e.vagas_disponiveis}
+                </p>
+
+                <button
+                  onClick={() => reservar(e)}
+                  className="mt-4 w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
+                >
+                  Avaliar e Ganhar R$3,00
+                </button>
+              </div>
+            ))}
+
+          {!carregandoEmpresas && (
+            <p className="text-xs text-gray-500 text-center mt-6">
+              🔄 Novas empresas podem aparecer a qualquer momento
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* MODAIS */}
+      {etapa === "tempo_esgotado" && (
+        <Modal>
+          <h2 className="text-xl font-bold text-yellow-400">
+            ⏳ Tempo esgotado
+          </h2>
+          <p className="text-gray-300">
+            Sua vaga expirou e foi liberada para outro usuário.
+          </p>
+
+          <button
+            onClick={confirmarTempoEsgotado}
+            className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
+          >
+            Voltar ao painel
+          </button>
+        </Modal>
+      )}
+
+      {etapa === "popup1" && empresaAtiva && (
+        <Modal>
+          <h2 className="text-xl font-bold text-[#1DB954]">🎉 Opa!</h2>
+          <p>Você vai ganhar <b>R$3,00</b> nessa avaliação</p>
+
+          <button
+            onClick={() => {
+              window.open(empresaAtiva.link_maps, "_blank")
+              setEtapa("idle")
+            }}
+            className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
+          >
+            Avaliar empresa
+          </button>
+        </Modal>
+      )}
+
+      {etapa === "confirmar" && (
+        <Modal>
+          <h2 className="text-xl font-bold">Você já avaliou?</h2>
+
+          <button
+            onClick={() => setEtapa("popup2")}
+            className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
+          >
+            Sim, já avaliei
+          </button>
+        </Modal>
+      )}
 
       {etapa === "popup2" && (
         <Modal>
@@ -215,45 +317,25 @@ export default function Dashboard() {
           <p>Vá para o último passo</p>
 
           <button
-            onClick={handleResgatar}
+            onClick={() => router.push(`/enviar/${slotId}`)}
             className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
           >
             Resgatar R$3,00
           </button>
         </Modal>
       )}
+    </div>
+  )
+}
 
-      {/* 🔒 MODAL WHATSAPP */}
-      {mostrarModalWhatsapp && (
-        <Modal>
-          <h2 className="text-lg font-bold text-green-400">
-            📲 Confirme seu WhatsApp
-          </h2>
+/* COMPONENTES AUX */
 
-          <p className="text-sm text-gray-300">
-            Digite seu WhatsApp com DDD.  
-            Exemplo: 11999999999
-          </p>
-
-          <input
-            type="tel"
-            placeholder="DDD + número"
-            value={whatsappInput}
-            onChange={(e) =>
-              setWhatsappInput(e.target.value.replace(/\D/g, ""))
-            }
-            className="w-full bg-[#2a2a2a] rounded-xl p-3 text-white text-center"
-          />
-
-          <button
-            onClick={salvarWhatsapp}
-            disabled={salvandoWhatsapp}
-            className="w-full bg-green-400 text-black font-bold py-3 rounded-xl disabled:opacity-50"
-          >
-            {salvandoWhatsapp ? "Salvando..." : "Confirmar e continuar"}
-          </button>
-        </Modal>
-      )}
+function LoadingCard() {
+  return (
+    <div className="bg-[#181818] border border-[#2a2a2a] rounded-2xl p-4 animate-pulse">
+      <div className="h-4 w-2/3 bg-[#2a2a2a] rounded mb-2" />
+      <div className="h-3 w-1/3 bg-[#2a2a2a] rounded mb-4" />
+      <div className="h-10 w-full bg-[#2a2a2a] rounded-full" />
     </div>
   )
 }
