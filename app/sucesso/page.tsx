@@ -4,6 +4,17 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
+// ======================================================
+// PÁGINA /SUCESSO
+// ------------------------------------------------------
+// O que esta página faz:
+// 1) Verifica se usuário tem WhatsApp
+// 2) Se não tiver -> bloqueia até cadastrar
+// 3) Depois verifica se tem PIX
+// 4) NÃO altera nenhuma lógica do PIX
+// 5) Revalida dados após salvar WhatsApp (blindagem)
+// ======================================================
+
 export default function Sucesso() {
   const [temPix, setTemPix] = useState<boolean | null>(null)
   const [whatsapp, setWhatsapp] = useState("")
@@ -12,11 +23,17 @@ export default function Sucesso() {
 
   const router = useRouter()
 
+  // ======================================================
+  // AO ENTRAR NA PÁGINA
+  // ======================================================
   useEffect(() => {
     verificarDados()
     tocarSomCash()
   }, [])
 
+  // ======================================================
+  // SOM DE CONFIRMAÇÃO
+  // ======================================================
   function tocarSomCash() {
     try {
       const audio = new Audio("/sounds/cash.mp3")
@@ -25,6 +42,9 @@ export default function Sucesso() {
     } catch {}
   }
 
+  // ======================================================
+  // BUSCA PIX E WHATSAPP NO BANCO
+  // ======================================================
   async function verificarDados() {
     const {
       data: { user },
@@ -45,9 +65,18 @@ export default function Sucesso() {
     setTemWhatsapp(!!data?.whatsapp)
   }
 
+  // ======================================================
+  // SALVAR WHATSAPP (COM VALIDAÇÃO BR)
+  // ======================================================
   async function salvarWhatsapp() {
-    if (!whatsapp || whatsapp.length < 10) {
-      alert("Digite um WhatsApp válido com DDD.")
+    // remove qualquer coisa que não seja número
+    const numeroLimpo = whatsapp.replace(/\D/g, "")
+
+    // valida padrão Brasil
+    // mínimo 10 (DDD + fixo)
+    // máximo 11 (DDD + celular 9 dígitos)
+    if (numeroLimpo.length < 10 || numeroLimpo.length > 11) {
+      alert("Digite um WhatsApp válido com DDD (apenas números).")
       return
     }
 
@@ -57,11 +86,14 @@ export default function Sucesso() {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user) return
+    if (!user) {
+      setSalvandoWhatsapp(false)
+      return
+    }
 
     const { error } = await supabase
       .from("profiles")
-      .update({ whatsapp })
+      .update({ whatsapp: numeroLimpo })
       .eq("id", user.id)
 
     if (error) {
@@ -70,10 +102,17 @@ export default function Sucesso() {
       return
     }
 
-    setTemWhatsapp(true)
+    // 🔒 REVALIDAÇÃO COMPLETA
+    // em vez de só setar true, buscamos novamente do banco
+    await verificarDados()
+
+    setWhatsapp("")
     setSalvandoWhatsapp(false)
   }
 
+  // ======================================================
+  // LOADING INICIAL
+  // ======================================================
   if (temPix === null || temWhatsapp === null) {
     return (
       <div className="min-h-screen flex items-center justify-center text-white">
@@ -85,7 +124,9 @@ export default function Sucesso() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#111] flex flex-col items-center justify-center px-6 text-white">
 
-      {/* 🔒 WHATSAPP OBRIGATÓRIO */}
+      {/* ======================================================
+          WHATSAPP OBRIGATÓRIO
+      ====================================================== */}
       {!temWhatsapp && (
         <div className="bg-black border border-green-400 rounded-2xl p-6 w-full max-w-md text-center space-y-4 animate-pulse">
           <p className="text-green-400 font-bold text-lg">
@@ -93,32 +134,33 @@ export default function Sucesso() {
           </p>
 
           <p className="text-sm text-gray-300">
-            Precisamos do seu WhatsApp para enviar o comprovante do PIX
-            e avisar quando seu saldo estiver disponível.
+            Precisamos do seu WhatsApp para avisar quando seu saldo estiver disponível.
           </p>
 
           <input
-  type="tel"
-  placeholder="WhatsApp com DDD (ex: 11999999999)"
-  value={whatsapp}
-  onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ""))}
-  className="
-    w-full
-    rounded-xl
-    px-4
-    py-3
-    text-white
-    text-center
-    bg-[#0f0f0f]
-    border
-    border-white/20
-    placeholder:text-gray-400
-    focus:outline-none
-    focus:ring-2
-    focus:ring-green-400
-  "
-/>
-
+            type="tel"
+            maxLength={11} // limite máximo BR
+            placeholder="WhatsApp com DDD (ex: 11999999999)"
+            value={whatsapp}
+            onChange={(e) =>
+              setWhatsapp(e.target.value.replace(/\D/g, ""))
+            }
+            className="
+              w-full
+              rounded-xl
+              px-4
+              py-3
+              text-white
+              text-center
+              bg-[#0f0f0f]
+              border
+              border-white/20
+              placeholder:text-gray-400
+              focus:outline-none
+              focus:ring-2
+              focus:ring-green-400
+            "
+          />
 
           <button
             onClick={salvarWhatsapp}
@@ -130,17 +172,17 @@ export default function Sucesso() {
         </div>
       )}
 
-      {/* 🔽 RESTANTE SÓ APARECE SE TIVER WHATSAPP */}
+      {/* ======================================================
+          RESTANTE DA PÁGINA (PIX INTACTO)
+      ====================================================== */}
       {temWhatsapp && (
         <>
-          {/* ÍCONE */}
           <img
             src="/cash.png"
             alt="Dinheiro"
             className="w-20 h-20 mb-6"
           />
 
-          {/* CARD PRINCIPAL */}
           <div className="bg-black rounded-2xl p-6 w-full max-w-md text-center mb-4">
             <p className="text-xl font-semibold">
               Parabéns!{" "}
@@ -151,7 +193,6 @@ export default function Sucesso() {
             </p>
           </div>
 
-          {/* INFO */}
           <div className="bg-[#2a2a2a] rounded-xl p-4 w-full max-w-md text-center text-sm text-gray-300 mb-4 space-y-2">
             <p>✅ Sua avaliação foi enviada com sucesso e já está em análise.</p>
 
@@ -167,7 +208,6 @@ export default function Sucesso() {
             </p>
           </div>
 
-          {/* AÇÕES */}
           {temPix ? (
             <button
               onClick={() => router.push("/dashboard")}

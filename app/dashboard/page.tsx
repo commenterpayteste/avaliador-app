@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 
 type Etapa = "idle" | "popup1" | "confirmar" | "popup2" | "tempo_esgotado"
 
-const TEMPO_MAX = 10 * 60 // 10 minutos
+const TEMPO_MAX = 10 * 60
 const CACHE_KEY = "empresas_cache"
 
 export default function Dashboard() {
@@ -16,17 +16,76 @@ export default function Dashboard() {
   const [missaoAtiva, setMissaoAtiva] = useState(false)
   const [tempoRestante, setTempoRestante] = useState<number | null>(null)
   const [desistindo, setDesistindo] = useState(false)
-
-  // 🔥 NOVOS
   const [carregandoEmpresas, setCarregandoEmpresas] = useState(true)
+
+  // 🔒 WHATSAPP (NÃO BLOQUEANTE)
+  const [temWhatsapp, setTemWhatsapp] = useState<boolean | null>(null)
+  const [mostrarModalZap, setMostrarModalZap] = useState(false)
+  const [whatsapp, setWhatsapp] = useState("")
+  const [salvandoZap, setSalvandoZap] = useState(false)
 
   const router = useRouter()
 
   useEffect(() => {
     init()
+    verificarWhatsapp()
   }, [])
 
-  // TIMER
+  // =========================
+  // VERIFICAR WHATSAPP
+  // =========================
+  async function verificarWhatsapp() {
+    const { data } = await supabase.auth.getUser()
+    if (!data.user) return
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("whatsapp")
+      .eq("id", data.user.id)
+      .maybeSingle()
+
+    setTemWhatsapp(!!profile?.whatsapp)
+  }
+
+  // =========================
+  // SALVAR WHATSAPP
+  // =========================
+  async function salvarWhatsapp() {
+    const numeroLimpo = whatsapp.replace(/\D/g, "")
+
+    if (numeroLimpo.length < 10 || numeroLimpo.length > 11) {
+      alert("Digite um WhatsApp válido com DDD.")
+      return
+    }
+
+    setSalvandoZap(true)
+
+    const { data } = await supabase.auth.getUser()
+    if (!data.user) {
+      setSalvandoZap(false)
+      return
+    }
+
+    const { error } = await supabase
+      .from("profiles")
+      .update({ whatsapp: numeroLimpo })
+      .eq("id", data.user.id)
+
+    if (error) {
+      alert(error.message)
+      setSalvandoZap(false)
+      return
+    }
+
+    await verificarWhatsapp()
+    setMostrarModalZap(false)
+    setWhatsapp("")
+    setSalvandoZap(false)
+  }
+
+  // =========================
+  // TIMER ORIGINAL (INALTERADO)
+  // =========================
   useEffect(() => {
     if (!slotId) return
 
@@ -70,7 +129,6 @@ export default function Dashboard() {
         localStorage.setItem(`inicio_${missao.id}`, Date.now().toString())
       }
     } else {
-      // 🔥 tenta cache primeiro
       const cache = localStorage.getItem(CACHE_KEY)
       if (cache) {
         setEmpresas(JSON.parse(cache))
@@ -93,7 +151,6 @@ export default function Dashboard() {
       localStorage.setItem(CACHE_KEY, JSON.stringify(data))
     }
 
-    // delay fake pra UX premium
     setTimeout(() => {
       setCarregandoEmpresas(false)
     }, 600)
@@ -157,37 +214,53 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#121212] text-white pb-28">
-     <header className="py-6 flex justify-center">
-  <img
-    src="/icons/commenter1.png"
-    alt="Commenter Pay"
-    className="h-10 object-contain"
-  />
-</header>
-{/* AVISO DE TESTES */}
-<div className="mx-4 mb-6">
-  <div className="border-2 border-orange-500 rounded-2xl p-4 bg-[#1a1a1a] animate-pulse">
+      <header className="py-6 flex justify-center">
+        <img src="/icons/commenter1.png" alt="Commenter Pay" className="h-10 object-contain" />
+      </header>
 
-    <div className="flex items-center justify-center gap-2 mb-2">
-      <span className="text-orange-400 text-sm font-bold">
-        🚨 ESTAMOS EM FASE DE TESTES 🚨
-      </span>
-    </div>
+      {/* CARD WHATSAPP (APENAS AVISO, NÃO BLOQUEIA) */}
+      {temWhatsapp === false && (
+        <div className="mx-4 mb-6">
+          <div className="border-2 border-green-400 rounded-2xl p-4 bg-[#1a1a1a]">
+            <p className="text-green-400 font-bold text-sm mb-2">
+              ⚠️ Você ainda não cadastrou seu WhatsApp
+            </p>
+            <p className="text-xs text-gray-300 mb-3">
+              Cadastre para receber avisos quando sua avaliação for aprovada.
+            </p>
+            <button
+              onClick={() => setMostrarModalZap(true)}
+              className="w-full bg-green-400 text-black font-bold py-2 rounded-xl text-sm"
+            >
+              CADASTRAR WHATSAPP
+            </button>
+          </div>
+        </div>
+      )}
 
-    <p className="text-center text-xs text-gray-300 mb-4">
-      Se encontrar qualquer erro ou quiser ajudar com dicas,
-      clique no botão abaixo para falar com nossa equipe.
-    </p>
+      {/* AVISO DE TESTES */}
+      <div className="mx-4 mb-6">
+        <div className="border-2 border-orange-500 rounded-2xl p-4 bg-[#1a1a1a] animate-pulse">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-orange-400 text-sm font-bold">
+              🚨 ESTAMOS EM FASE DE TESTES 🚨
+            </span>
+          </div>
+          <p className="text-center text-xs text-gray-300 mb-4">
+            Se encontrar qualquer erro ou quiser ajudar com dicas,
+            clique no botão abaixo para falar com nossa equipe.
+          </p>
+          <a
+            href="https://wa.link/sjoe8h"
+            target="_blank"
+            className="block w-full text-center bg-green-500 hover:bg-green-600 transition text-black font-bold py-2 rounded-xl text-sm"
+          >
+            Clique e entre no nosso grupo para ganhar mais!
+          </a>
+        </div>
+      </div>
 
-    <a
-      href="https://wa.link/sjoe8h"
-      target="_blank"
-      className="block w-full text-center bg-green-500 hover:bg-green-600 transition text-black font-bold py-2 rounded-xl text-sm"
-    >
-      Clique e entre no nosso grupo para ganhar mais!
-    </a>
-  </div>
-</div>
+      {/* RESTANTE DO SEU DASHBOARD ORIGINAL SEGUE NORMAL AQUI */}
 
 
       {/* MISSÃO ATIVA */}
