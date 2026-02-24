@@ -218,47 +218,51 @@ export default function Dashboard() {
         <img src="/icons/commenter1.png" alt="Commenter Pay" className="h-10 object-contain" />
       </header>
 
-      {/* CARD WHATSAPP (APENAS AVISO, NÃO BLOQUEIA) */}
+            {/* 🔥 GRUPO VIP COMMENTERPAY (PRIORIDADE) */}
+      <div className="mx-4 mb-4">
+        <div className="bg-[#1f1f1f] border border-orange-500 rounded-2xl p-5">
+
+          <p className="text-orange-400 font-bold text-sm text-center mb-2">
+            🔥 GRUPO VIP COMMENTERPAY
+          </p>
+
+          <p className="text-gray-300 text-xs text-center mb-4">
+            Receba novas empresas antes de todo mundo,
+            avisos de pagamento e suporte direto.
+          </p>
+
+          <a
+            href="https://wa.link/sjoe8h"
+            target="_blank"
+            className="block w-full text-center bg-orange-500 hover:bg-orange-600 transition text-black font-bold py-3 rounded-xl text-sm"
+          >
+            ENTRAR NO GRUPO AGORA
+          </a>
+        </div>
+      </div>
+
+      {/* ⚙️ AVISO WHATSAPP (SECUNDÁRIO) */}
       {temWhatsapp === false && (
         <div className="mx-4 mb-6">
-          <div className="border-2 border-green-400 rounded-2xl p-4 bg-[#1a1a1a]">
-            <p className="text-green-400 font-bold text-sm mb-2">
-              ⚠️ Você ainda não cadastrou seu WhatsApp
+          <div className="bg-[#1a1a1a] border border-green-400/40 rounded-2xl p-4">
+
+            <p className="text-green-400 font-semibold text-xs mb-1">
+              Complete seu cadastro
             </p>
-            <p className="text-xs text-gray-300 mb-3">
-              Cadastre para receber avisos quando sua avaliação for aprovada.
+
+            <p className="text-gray-400 text-xs mb-3">
+              Cadastre seu WhatsApp para receber avisos de aprovação.
             </p>
+
             <button
               onClick={() => setMostrarModalZap(true)}
-              className="w-full bg-green-400 text-black font-bold py-2 rounded-xl text-sm"
+              className="w-full bg-green-400 text-black font-semibold py-2 rounded-xl text-sm"
             >
-              CADASTRAR WHATSAPP
+              Cadastrar WhatsApp
             </button>
           </div>
         </div>
       )}
-
-      {/* AVISO DE TESTES */}
-      <div className="mx-4 mb-6">
-        <div className="border-2 border-orange-500 rounded-2xl p-4 bg-[#1a1a1a] animate-pulse">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <span className="text-orange-400 text-sm font-bold">
-              🚨 ESTAMOS EM FASE DE TESTES 🚨
-            </span>
-          </div>
-          <p className="text-center text-xs text-gray-300 mb-4">
-            Se encontrar qualquer erro ou quiser ajudar com dicas,
-            clique no botão abaixo para falar com nossa equipe.
-          </p>
-          <a
-            href="https://wa.link/sjoe8h"
-            target="_blank"
-            className="block w-full text-center bg-green-500 hover:bg-green-600 transition text-black font-bold py-2 rounded-xl text-sm"
-          >
-            Clique e entre no nosso grupo para ganhar mais!
-          </a>
-        </div>
-      </div>
 
       {/* RESTANTE DO SEU DASHBOARD ORIGINAL SEGUE NORMAL AQUI */}
 
@@ -395,6 +399,42 @@ export default function Dashboard() {
           >
             Resgatar R$3,00
           </button>
+        </Modal>
+      )}
+            {/* MODAL CADASTRAR WHATSAPP */}
+      {mostrarModalZap && (
+        <Modal>
+          <h2 className="text-lg font-bold text-green-400">
+            Cadastrar WhatsApp
+          </h2>
+
+          <input
+            type="tel"
+            maxLength={11}
+            placeholder="DDD + número (ex: 11999999999)"
+            value={whatsapp}
+            onChange={(e) =>
+              setWhatsapp(e.target.value.replace(/\D/g, ""))
+            }
+            className="w-full bg-[#2a2a2a] rounded-xl p-3 text-white text-center"
+          />
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setMostrarModalZap(false)}
+              className="flex-1 bg-gray-600 py-2 rounded-xl"
+            >
+              Cancelar
+            </button>
+
+            <button
+              onClick={salvarWhatsapp}
+              disabled={salvandoZap}
+              className="flex-1 bg-green-400 text-black py-2 rounded-xl font-bold disabled:opacity-50"
+            >
+              {salvandoZap ? "Salvando..." : "Salvar"}
+            </button>
+          </div>
         </Modal>
       )}
     </div>

@@ -9,6 +9,7 @@ type Perfil = {
   email: string | null
   pix_key: string | null
   pix_tipo: string | null
+  whatsapp: string | null
 }
 
 export default function Dados() {
@@ -42,7 +43,7 @@ export default function Dados() {
 
     const { data } = await supabase
       .from("profiles")
-      .select("nome, pix_key, pix_tipo")
+      .select("nome, pix_key, pix_tipo, whatsapp")
       .eq("id", user.id)
       .maybeSingle()
 
@@ -60,6 +61,7 @@ export default function Dados() {
       email: user.email ?? null,
       pix_key: data?.pix_key ?? null,
       pix_tipo: data?.pix_tipo ?? null,
+      whatsapp: data?.whatsapp ?? null,
     })
 
     setPixKey(data?.pix_key ?? "")
@@ -118,7 +120,6 @@ export default function Dados() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#111] px-4 pt-6 pb-28 text-white">
 
-      {/* 🔙 VOLTAR */}
       <button
         onClick={() => router.push("/dashboard")}
         className="text-green-400 text-sm font-semibold mb-4"
@@ -126,7 +127,6 @@ export default function Dados() {
         ← Voltar
       </button>
 
-      {/* HEADER */}
       <div className="flex justify-between items-start mb-6">
         <div>
           <p className="text-green-400 text-lg font-semibold">Olá!</p>
@@ -137,14 +137,10 @@ export default function Dados() {
         </div>
       </div>
 
-      {/* INFO PIX SALVO */}
       {pixSalvo && (
-        <div className="bg-[#1f3a2a] border border-green-400 rounded-2xl p-4 mb-6 text-sm animate-fade-in">
+        <div className="bg-[#1f3a2a] border border-green-400 rounded-2xl p-4 mb-6 text-sm">
           <p className="text-green-400 font-semibold mb-1">
             ✅ PIX cadastrado com sucesso!
-          </p>
-          <p className="text-gray-300">
-            Sua avaliação já foi enviada e está em análise.
           </p>
         </div>
       )}
@@ -153,6 +149,18 @@ export default function Dados() {
       <div className="bg-black rounded-2xl p-4 space-y-3 mb-6">
         <Campo label="Nome usuário" valor={perfil.nome} />
         <Campo label="Gmail" valor={perfil.email} />
+
+        {/* WHATSAPP CONSISTENTE */}
+        <Campo
+          label="WhatsApp"
+          valor={
+            perfil.whatsapp && perfil.whatsapp.trim() !== ""
+              ? perfil.whatsapp
+              : "Não cadastrado"
+          }
+          destaque={!perfil.whatsapp}
+        />
+
         <Campo
           label="Pix"
           valor={
@@ -164,35 +172,16 @@ export default function Dados() {
         />
       </div>
 
-      {/* WIDGETS EXPLICATIVOS */}
       <div className="bg-black border border-green-400/30 rounded-2xl p-4 mb-4 text-sm">
         <p className="font-semibold text-green-400 mb-1">
-          🔒 Por que precisamos do seu PIX?
+          🔒 Seus dados são protegidos
         </p>
         <p className="text-gray-300">
-          Usamos sua chave PIX apenas para realizar pagamentos.
-          Seus dados não são compartilhados com terceiros.
+          Usamos seu WhatsApp apenas para avisos de aprovação
+          e sua chave PIX apenas para pagamentos.
         </p>
       </div>
 
-      <div className="bg-black border border-gray-700 rounded-2xl p-4 mb-4 text-sm">
-        <p className="font-semibold text-green-400 mb-1">
-          💰 Como funciona o pagamento?
-        </p>
-        <p className="text-gray-300">
-          Após a aprovação da avaliação, o valor entra no seu saldo.
-          Quando você solicitar saque, todo o saldo disponível será pago no seu PIX.
-        </p>
-      </div>
-
-      <div className="bg-black border border-gray-700 rounded-2xl p-4 mb-6 text-sm">
-        <p className="text-gray-300">
-          📌 Você pode continuar avaliando empresas normalmente,
-          mesmo enquanto suas avaliações estão em análise.
-        </p>
-      </div>
-
-      {/* BOTÕES */}
       <div className="flex gap-3 mb-8">
         <button
           onClick={() => router.push("/dashboard")}
@@ -209,7 +198,6 @@ export default function Dados() {
         </button>
       </div>
 
-      {/* SUPORTE */}
       <button
         onClick={() => window.open("https://wa.me/5582996265512", "_blank")}
         className="w-full bg-[#1c1c1c] border border-gray-700 py-3 rounded-xl text-sm text-gray-300"
@@ -217,7 +205,6 @@ export default function Dados() {
         💬 Conversar com suporte
       </button>
 
-      {/* MODAL PIX */}
       {editandoPix && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4">
           <div className="bg-[#181818] rounded-2xl p-6 w-full max-w-sm space-y-4">
@@ -262,7 +249,6 @@ export default function Dados() {
         </div>
       )}
 
-      {/* ICONES */}
       <div className="flex justify-center gap-6 opacity-80 mt-8">
         <img src="/icons/pix.png" alt="PIX" className="h-6" />
         <img src="/icons/seguranca.png" alt="Seguro" className="h-6" />
@@ -288,7 +274,7 @@ function Campo({
           destaque ? "text-yellow-400" : "text-white"
         }`}
       >
-        {valor ?? "—"}
+        {valor ?? "Não cadastrado"}
       </p>
     </div>
   )
