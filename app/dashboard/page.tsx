@@ -107,38 +107,44 @@ export default function Dashboard() {
     return () => clearInterval(interval)
   }, [slotId])
 
-  async function init() {
-    const { data } = await supabase.auth.getUser()
-    if (!data.user) {
-      router.push("/login")
-      return
-    }
+async function init() {
+  const { data: { user } } = await supabase.auth.getUser()
 
-    const { data: missao } = await supabase
-      .from("review_slots")
-      .select("id, companies(nome, link_maps)")
-      .eq("status", "reservado")
-      .maybeSingle()
-
-    if (missao) {
-      setMissaoAtiva(true)
-      setEmpresaAtiva(missao.companies)
-      setSlotId(missao.id)
-
-      if (!localStorage.getItem(`inicio_${missao.id}`)) {
-        localStorage.setItem(`inicio_${missao.id}`, Date.now().toString())
-      }
-    } else {
-      const cache = localStorage.getItem(CACHE_KEY)
-      if (cache) {
-        setEmpresas(JSON.parse(cache))
-        setCarregandoEmpresas(false)
-      }
-
-      fetchEmpresas()
-    }
+  if (!user) {
+    router.push("/login")
+    return
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single()
+
+  // 🔥 SE FOR ADMIN, REDIRECIONA
+  if (profile?.role === "admin") {
+    router.replace("/painelsantz") // ou sua rota admin real
+    return
+  }
+
+  // 🔒 SOMENTE COMENTADOR CONTINUA
+  const { data: missao } = await supabase
+    .from("review_slots")
+    .select("id, companies(nome, link_maps)")
+    .eq("user_id", user.id)
+    .eq("status", "reservado")
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle()
+
+  if (missao) {
+    setMissaoAtiva(true)
+    setEmpresaAtiva(missao.companies)
+    setSlotId(missao.id)
+  } else {
+    reset()
+    fetchEmpresas()
+  }
+}
   async function fetchEmpresas() {
     setCarregandoEmpresas(true)
 

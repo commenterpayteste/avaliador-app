@@ -16,6 +16,7 @@ type EmpresaAdmin = {
   link_maps: string
   pacote_limite: number
   vagas_disponiveis: number
+  limite_diario: number   // 🔥 NOVO
   total_usado: number
   total_aprovado: number
   total_em_analise: number
@@ -30,6 +31,7 @@ export default function AdminEmpresas() {
   const [nome, setNome] = useState("")
   const [link, setLink] = useState("")
   const [pacote, setPacote] = useState<number | "">("")
+  const [limiteDiario, setLimiteDiario] = useState<number | "">("")
   const [loading, setLoading] = useState(false)
   const [sucesso, setSucesso] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
@@ -46,7 +48,7 @@ export default function AdminEmpresas() {
     setErro(null)
     setSucesso(false)
 
-    if (!nome || !link || !pacote) {
+    if (!nome || !link || !pacote || !limiteDiario) {
       setErro("Preencha todos os campos")
       return
     }
@@ -54,10 +56,11 @@ export default function AdminEmpresas() {
     setLoading(true)
 
     const { error } = await supabase.rpc("admin_create_company", {
-      p_nome: nome,
-      p_link_maps: link,
-      p_pacote_limite: pacote,
-    })
+  p_nome: nome,
+  p_link_maps: link,
+  p_pacote_limite: pacote,
+  p_limite_diario: limiteDiario,
+})
 
     setLoading(false)
 
@@ -111,7 +114,12 @@ export default function AdminEmpresas() {
             type="number"
             onChange={(v) => setPacote(Number(v))}
           />
-
+<Input
+  placeholder="Limite diário de avaliações"
+  value={limiteDiario}
+  type="number"
+  onChange={(v) => setLimiteDiario(Number(v))}
+/>
           {erro && (
             <div className="bg-red-900/40 border border-red-500 rounded-xl p-3 text-sm">
               {erro}
@@ -148,14 +156,18 @@ export default function AdminEmpresas() {
                 className="bg-black border border-[#2a2a2a] rounded-xl p-4 text-sm space-y-1"
               >
                 <p className="font-semibold text-blue-400">{e.nome}</p>
-
+<p className="text-gray-400">
+  Limite diário: {e.limite_diario}
+</p>
                 {/* HISTÓRICO */}
                 {aba === "cadastradas" ? (
                   <>
                     <p className="text-gray-400">
                       Pacote contratado: {e.pacote_limite}
                     </p>
-
+<p className="text-gray-400">
+  Limite diário: {e.limite_diario}
+</p>
                     <a
                       href={e.link_maps}
                       target="_blank"
