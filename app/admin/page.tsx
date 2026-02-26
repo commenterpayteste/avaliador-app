@@ -1,196 +1,150 @@
 "use client"
+
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
-import { useRouter } from "next/navigation"
 
-export default function Admin() {
-  const [comentarios, setComentarios] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [imagemAtiva, setImagemAtiva] = useState<string | null>(null)
-  const router = useRouter()
+type Dashboard = {
+  avaliacoes_pendentes: number
+  avaliacoes_aprovadas_total: number
+  avaliacoes_aprovadas_hoje: number
+  empresas_ativas: number
+  vagas_restantes: number
+  receita_total: number
+  receita_hoje: number
+  custo_total: number
+  custo_hoje: number
+}
+
+export default function AdminDashboard() {
+  const [dados, setDados] = useState<Dashboard | null>(null)
 
   useEffect(() => {
-    verificarAdmin()
+    carregar()
   }, [])
 
-  async function verificarAdmin() {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) {
-      router.push("/login")
-      return
-    }
-
-    const { data: admin } = await supabase
-      .from("admins")
-      .select("email")
-      .eq("email", user.email)
-      .maybeSingle()
-
-    if (!admin) {
-      await supabase.auth.signOut()
-      router.push("/login")
-      return
-    }
-
+  async function carregar() {
     const { data } = await supabase
-      .from("vw_admin_comentarios")
+      .from("vw_admin_dashboard")
       .select("*")
-      .order("data_envio", { ascending: false })
+      .single()
 
-    setComentarios(data || [])
-    setLoading(false)
+    setDados(data)
   }
 
-  const aprovar = async (slotId: string) => {
-    const { error } = await supabase.rpc("aprovar_comentario", {
-      p_slot_id: slotId,
-      p_valor: 3,
-    })
-
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    verificarAdmin()
+  if (!dados) {
+    return (
+      <div className="flex items-center justify-center h-96 text-gray-400">
+        Carregando métricas...
+      </div>
+    )
   }
 
-  const recusar = async (slotId: string) => {
-    const ok = confirm("Recusar este comentário?")
-    if (!ok) return
-
-    const { error } = await supabase.rpc("recusar_comentario", {
-      p_slot_id: slotId,
-    })
-
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    verificarAdmin()
-  }
-
-  if (loading) {
-    return <div className="text-center text-white p-10">Carregando…</div>
-  }
-
-  const pendentes = comentarios.filter(c => c.status === "enviado").length
-  const aprovadas = comentarios.filter(c => c.status === "aprovado").length
-  const recusadas = comentarios.filter(c => c.status === "recusado").length
+  const lucroTotal = dados.receita_total - dados.custo_total
+  const lucroHoje = dados.receita_hoje - dados.custo_hoje
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white p-10 space-y-10">
+    <div className="space-y-10">
 
-      {/* CONTADORES */}
-      <div className="flex justify-center gap-6">
-        <Badge label={`${pendentes} pendentes`} color="orange" />
-        <Badge label={`${aprovadas} aprovadas`} color="green" />
-        <Badge label={`${recusadas} recusadas`} color="red" />
+      <h1 className="text-4xl font-bold text-white">
+        📊 Dashboard Executivo
+      </h1>
+
+      {/* RECEITA & LUCRO */}
+      <div className="grid grid-cols-4 gap-6">
+
+        <CardBig
+          title="Receita Total"
+          value={format(dados.receita_total)}
+          color="green"
+        />
+
+        <CardBig
+          title="Receita Hoje"
+          value={format(dados.receita_hoje)}
+          color="green"
+        />
+
+        <CardBig
+          title="Lucro Total"
+          value={format(lucroTotal)}
+          color="emerald"
+        />
+
+        <CardBig
+          title="Lucro Hoje"
+          value={format(lucroHoje)}
+          color="emerald"
+        />
       </div>
 
-      {/* WIDGET */}
-      <div className="bg-black rounded-3xl p-6 shadow-2xl">
+      {/* OPERACIONAL */}
+      <div className="grid grid-cols-4 gap-6">
 
-        <div className="grid grid-cols-6 text-xs text-gray-400 mb-4 px-2">
-          <span>Usuário</span>
-          <span>Email</span>
-          <span>Empresa</span>
-          <span>Data / Hora</span>
-          <span>ID Usuário</span>
-          <span className="text-right">Ações</span>
-        </div>
+        <Card
+          title="Avaliações Pendentes"
+          value={dados.avaliacoes_pendentes}
+        />
 
-        <div className="space-y-3">
-          {comentarios.map((c) => (
-            <div
-              key={c.slot_id}
-              className="grid grid-cols-6 items-center bg-[#181818] rounded-xl px-4 py-3 text-sm"
-            >
-              <span>{c.usuario}</span>
-              <span className="truncate">{c.email_usuario}</span>
-              <span>{c.empresa}</span>
-              <span className="text-xs text-gray-400">
-                {new Date(c.data_envio).toLocaleString("pt-BR")}
-              </span>
-              <span className="text-xs truncate">{c.user_id}</span>
+        <Card
+          title="Aprovadas Hoje"
+          value={dados.avaliacoes_aprovadas_hoje}
+        />
 
-              {/* AÇÕES */}
-              <div className="flex justify-end gap-2 items-center">
+        <Card
+          title="Empresas Ativas"
+          value={dados.empresas_ativas}
+        />
 
-                {c.review_image_url && (
-                  <img
-                    src={c.review_image_url}
-                    onClick={() => setImagemAtiva(c.review_image_url)}
-                    className="w-10 h-10 object-cover rounded cursor-pointer border border-gray-600"
-                    title="Clique para ampliar"
-                  />
-                )}
-
-                {c.status === "enviado" ? (
-                  <>
-                    <button
-                      onClick={() => aprovar(c.slot_id)}
-                      className="bg-green-600 px-3 py-1 rounded-md"
-                    >
-                      Aprovar
-                    </button>
-
-                    <button
-                      onClick={() => recusar(c.slot_id)}
-                      className="bg-red-600 px-3 py-1 rounded-md"
-                    >
-                      Rejeitar
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-xs text-gray-400 italic">
-                    {c.status === "aprovado"
-                      ? "✔ Aprovado"
-                      : "✖ Recusado"}
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        <Card
+          title="Vagas Restantes"
+          value={dados.vagas_restantes}
+        />
       </div>
 
-      {/* MODAL IMAGEM */}
-      {imagemAtiva && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-          <div className="relative max-w-4xl w-full px-4">
-            <button
-              onClick={() => setImagemAtiva(null)}
-              className="absolute -top-10 right-4 text-white"
-            >
-              ✕ Fechar
-            </button>
-
-            <img
-              src={imagemAtiva}
-              className="w-full max-h-[80vh] object-contain rounded-xl border border-gray-700"
-            />
-          </div>
-        </div>
-      )}
     </div>
   )
 }
 
-function Badge({ label, color }: { label: string; color: string }) {
-  const colors: any = {
-    orange: "text-orange-400",
-    green: "text-green-500",
-    red: "text-red-500",
+/* ================= COMPONENTES ================= */
+
+function format(valor: number) {
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL"
+  })
+}
+
+function CardBig({ title, value, color }: any) {
+  const cores: any = {
+    green: "text-green-400",
+    emerald: "text-emerald-400"
   }
 
   return (
-    <div className={`px-6 py-2 rounded-full bg-black ${colors[color]}`}>
-      {label}
+    <div className="bg-gradient-to-br from-[#1b1f2a] to-[#11141a] border border-[#2a2f3a] rounded-3xl p-8 shadow-xl">
+
+      <p className="text-gray-400 text-sm uppercase tracking-wider">
+        {title}
+      </p>
+
+      <p className={`text-3xl font-bold mt-3 ${cores[color]}`}>
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function Card({ title, value }: any) {
+  return (
+    <div className="bg-[#161a21] border border-[#222] rounded-2xl p-6 shadow">
+
+      <p className="text-gray-400 text-sm">
+        {title}
+      </p>
+
+      <p className="text-2xl font-bold text-white mt-2">
+        {value}
+      </p>
     </div>
   )
 }
