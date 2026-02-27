@@ -7,6 +7,7 @@ export default function Admin() {
   const [comentarios, setComentarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [imagemAtiva, setImagemAtiva] = useState<string | null>(null)
+  const [aba, setAba] = useState<"pendentes" | "aprovadas" | "recusadas">("pendentes")
   const router = useRouter()
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function Admin() {
   }
 
   const recusar = async (slotId: string) => {
-    const ok = confirm("Recusar este comentário?")
+    const ok = confirm("Tem certeza que deseja recusar este comentário?")
     if (!ok) return
 
     const { error } = await supabase.rpc("recusar_comentario", {
@@ -78,85 +79,105 @@ export default function Admin() {
     return <div className="text-center text-white p-10">Carregando…</div>
   }
 
-  const pendentes = comentarios.filter(c => c.status === "enviado").length
-  const aprovadas = comentarios.filter(c => c.status === "aprovado").length
-  const recusadas = comentarios.filter(c => c.status === "recusado").length
+  const pendentes = comentarios.filter(c => c.status === "enviado")
+  const aprovadas = comentarios.filter(c => c.status === "aprovado")
+  const recusadas = comentarios.filter(c => c.status === "recusado")
+
+  const lista =
+    aba === "pendentes"
+      ? pendentes
+      : aba === "aprovadas"
+      ? aprovadas
+      : recusadas
 
   return (
-    <div className="min-h-screen bg-[#0b0b0b] text-white p-10 space-y-10">
+    <div className="min-h-screen bg-[#0b0b0b] text-white p-10 space-y-8">
 
-      {/* CONTADORES */}
-      <div className="flex justify-center gap-6">
-        <Badge label={`${pendentes} pendentes`} color="orange" />
-        <Badge label={`${aprovadas} aprovadas`} color="green" />
-        <Badge label={`${recusadas} recusadas`} color="red" />
+      {/* ABAS */}
+      <div className="flex gap-4">
+        <Tab
+          label={`Pendentes (${pendentes.length})`}
+          active={aba === "pendentes"}
+          onClick={() => setAba("pendentes")}
+        />
+        <Tab
+          label={`Aprovadas (${aprovadas.length})`}
+          active={aba === "aprovadas"}
+          onClick={() => setAba("aprovadas")}
+        />
+        <Tab
+          label={`Recusadas (${recusadas.length})`}
+          active={aba === "recusadas"}
+          onClick={() => setAba("recusadas")}
+        />
       </div>
 
-      {/* WIDGET */}
-      <div className="bg-black rounded-3xl p-6 shadow-2xl">
+      {/* CARDS */}
+      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+        {lista.map((c) => (
+          <div
+            key={c.slot_id}
+            className="bg-[#141414] border border-[#222] rounded-3xl overflow-hidden shadow-lg"
+          >
+            {/* IMAGEM */}
+            {c.review_image_url && (
+              <img
+                src={c.review_image_url}
+                onClick={() => setImagemAtiva(c.review_image_url)}
+                className="w-full h-56 object-cover cursor-pointer"
+              />
+            )}
 
-        <div className="grid grid-cols-6 text-xs text-gray-400 mb-4 px-2">
-          <span>Usuário</span>
-          <span>Email</span>
-          <span>Empresa</span>
-          <span>Data / Hora</span>
-          <span>ID Usuário</span>
-          <span className="text-right">Ações</span>
-        </div>
-
-        <div className="space-y-3">
-          {comentarios.map((c) => (
-            <div
-              key={c.slot_id}
-              className="grid grid-cols-6 items-center bg-[#181818] rounded-xl px-4 py-3 text-sm"
-            >
-              <span>{c.usuario}</span>
-              <span className="truncate">{c.email_usuario}</span>
-              <span>{c.empresa}</span>
-              <span className="text-xs text-gray-400">
-                {new Date(c.data_envio).toLocaleString("pt-BR")}
-              </span>
-              <span className="text-xs truncate">{c.user_id}</span>
-
-              {/* AÇÕES */}
-              <div className="flex justify-end gap-2 items-center">
-
-                {c.review_image_url && (
-                  <img
-                    src={c.review_image_url}
-                    onClick={() => setImagemAtiva(c.review_image_url)}
-                    className="w-10 h-10 object-cover rounded cursor-pointer border border-gray-600"
-                    title="Clique para ampliar"
-                  />
-                )}
-
-                {c.status === "enviado" ? (
-                  <>
-                    <button
-                      onClick={() => aprovar(c.slot_id)}
-                      className="bg-green-600 px-3 py-1 rounded-md"
-                    >
-                      Aprovar
-                    </button>
-
-                    <button
-                      onClick={() => recusar(c.slot_id)}
-                      className="bg-red-600 px-3 py-1 rounded-md"
-                    >
-                      Rejeitar
-                    </button>
-                  </>
-                ) : (
-                  <span className="text-xs text-gray-400 italic">
-                    {c.status === "aprovado"
-                      ? "✔ Aprovado"
-                      : "✖ Recusado"}
-                  </span>
-                )}
+            <div className="p-6 space-y-4">
+              {/* HEADER */}
+              <div>
+                <h3 className="text-xl font-bold">{c.usuario}</h3>
+                <p className="text-sm text-gray-400">{c.empresa}</p>
               </div>
+
+              {/* INFO */}
+              <div className="text-sm text-gray-400 space-y-1">
+                <p>Email: {c.email_usuario}</p>
+                <p>
+                  Data:{" "}
+                  {new Date(c.data_envio).toLocaleString("pt-BR")}
+                </p>
+                <p>ID: {c.user_id}</p>
+              </div>
+
+              {/* STATUS OU AÇÕES */}
+              {c.status === "enviado" ? (
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => aprovar(c.slot_id)}
+                    className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl font-semibold"
+                  >
+                    Aprovar
+                  </button>
+
+                  <button
+                    onClick={() => recusar(c.slot_id)}
+                    className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-xl font-semibold"
+                  >
+                    Recusar
+                  </button>
+                </div>
+              ) : (
+                <span
+                  className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                    c.status === "aprovado"
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}
+                >
+                  {c.status === "aprovado"
+                    ? "✔ Aprovado"
+                    : "✖ Recusado"}
+                </span>
+              )}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* MODAL IMAGEM */}
@@ -181,16 +202,17 @@ export default function Admin() {
   )
 }
 
-function Badge({ label, color }: { label: string; color: string }) {
-  const colors: any = {
-    orange: "text-orange-400",
-    green: "text-green-500",
-    red: "text-red-500",
-  }
-
+function Tab({ label, active, onClick }: any) {
   return (
-    <div className={`px-6 py-2 rounded-full bg-black ${colors[color]}`}>
+    <button
+      onClick={onClick}
+      className={`px-6 py-2 rounded-xl text-sm font-semibold transition ${
+        active
+          ? "bg-orange-500 text-black"
+          : "bg-[#1a1a1a] text-gray-400 hover:bg-[#222]"
+      }`}
+    >
       {label}
-    </div>
+    </button>
   )
 }
