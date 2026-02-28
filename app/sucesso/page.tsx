@@ -134,7 +134,7 @@ export default function Sucesso() {
           </p>
 
           <p className="text-sm text-gray-300">
-            Precisamos do seu WhatsApp para avisar quando seu saldo estiver disponível.
+            Precisamos do seu WhatsApp para enviar o comprovante do pagamento.
           </p>
 
           <input

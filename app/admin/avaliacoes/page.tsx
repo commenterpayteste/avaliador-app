@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 
@@ -8,6 +8,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [imagemAtiva, setImagemAtiva] = useState<string | null>(null)
   const [aba, setAba] = useState<"pendentes" | "aprovadas" | "recusadas">("pendentes")
+  const [busca, setBusca] = useState("")
   const router = useRouter()
 
   useEffect(() => {
@@ -75,129 +76,134 @@ export default function Admin() {
     verificarAdmin()
   }
 
-  if (loading) {
-    return <div className="text-center text-white p-10">Carregando…</div>
-  }
-
+  // 🔥 FILTROS (AGORA SEM QUEBRAR HOOKS)
   const pendentes = comentarios.filter(c => c.status === "enviado")
   const aprovadas = comentarios.filter(c => c.status === "aprovado")
   const recusadas = comentarios.filter(c => c.status === "recusado")
 
-  const lista =
+  const listaBase =
     aba === "pendentes"
       ? pendentes
       : aba === "aprovadas"
       ? aprovadas
       : recusadas
 
+  const lista = useMemo(() => {
+    return listaBase.filter(c =>
+      c.usuario?.toLowerCase().includes(busca.toLowerCase()) ||
+      c.email_usuario?.toLowerCase().includes(busca.toLowerCase())
+    )
+  }, [listaBase, busca])
+
+  const hoje = new Date().toDateString()
+
+  if (loading) {
+    return <div className="text-center text-white p-10">Carregando…</div>
+  }
+
   return (
     <div className="min-h-screen bg-[#0b0b0b] text-white p-10 space-y-8">
 
       {/* ABAS */}
       <div className="flex gap-4">
-        <Tab
-          label={`Pendentes (${pendentes.length})`}
-          active={aba === "pendentes"}
-          onClick={() => setAba("pendentes")}
-        />
-        <Tab
-          label={`Aprovadas (${aprovadas.length})`}
-          active={aba === "aprovadas"}
-          onClick={() => setAba("aprovadas")}
-        />
-        <Tab
-          label={`Recusadas (${recusadas.length})`}
-          active={aba === "recusadas"}
-          onClick={() => setAba("recusadas")}
-        />
+        <Tab label={`Pendentes (${pendentes.length})`} active={aba==="pendentes"} onClick={()=>setAba("pendentes")} />
+        <Tab label={`Aprovadas (${aprovadas.length})`} active={aba==="aprovadas"} onClick={()=>setAba("aprovadas")} />
+        <Tab label={`Recusadas (${recusadas.length})`} active={aba==="recusadas"} onClick={()=>setAba("recusadas")} />
       </div>
+
+      {/* BUSCA */}
+      <input
+        placeholder="Buscar por nome ou email..."
+        value={busca}
+        onChange={(e)=>setBusca(e.target.value)}
+        className="w-full bg-[#1a1a1a] border border-[#222] rounded-xl px-4 py-3 text-sm outline-none focus:border-orange-500 transition"
+      />
 
       {/* CARDS */}
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {lista.map((c) => (
-          <div
-            key={c.slot_id}
-            className="bg-[#141414] border border-[#222] rounded-3xl overflow-hidden shadow-lg"
-          >
-            {/* IMAGEM */}
-            {c.review_image_url && (
-              <img
-                src={c.review_image_url}
-                onClick={() => setImagemAtiva(c.review_image_url)}
-                className="w-full h-56 object-cover cursor-pointer"
-              />
-            )}
 
-            <div className="p-6 space-y-4">
-              {/* HEADER */}
-              <div>
-                <h3 className="text-xl font-bold">{c.usuario}</h3>
-                <p className="text-sm text-gray-400">{c.empresa}</p>
-              </div>
+        {lista.map((c) => {
 
-              {/* INFO */}
-              <div className="text-sm text-gray-400 space-y-1">
-                <p>Email: {c.email_usuario}</p>
-                <p>
-                  Data:{" "}
-                  {new Date(c.data_envio).toLocaleString("pt-BR")}
-                </p>
-                <p>ID: {c.user_id}</p>
-              </div>
+          const ehNovo = new Date(c.data_envio).toDateString() === hoje
 
-              {/* STATUS OU AÇÕES */}
-              {c.status === "enviado" ? (
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={() => aprovar(c.slot_id)}
-                    className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl font-semibold"
-                  >
-                    Aprovar
-                  </button>
+          return (
+            <div
+              key={c.slot_id}
+              className="bg-[#141414] border border-[#222] rounded-3xl overflow-hidden shadow-lg hover:scale-[1.02] transition"
+            >
 
-                  <button
-                    onClick={() => recusar(c.slot_id)}
-                    className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-xl font-semibold"
-                  >
-                    Recusar
-                  </button>
-                </div>
-              ) : (
-                <span
-                  className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
-                    c.status === "aprovado"
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-red-500/20 text-red-400"
-                  }`}
-                >
-                  {c.status === "aprovado"
-                    ? "✔ Aprovado"
-                    : "✖ Recusado"}
-                </span>
+              {c.review_image_url && (
+                <img
+                  src={c.review_image_url}
+                  onClick={()=>setImagemAtiva(c.review_image_url)}
+                  className="w-full h-56 object-cover cursor-pointer"
+                />
               )}
+
+              <div className="p-6 space-y-4">
+
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-xl font-bold">{c.usuario}</h3>
+                    <p className="text-sm text-gray-400">{c.empresa}</p>
+                  </div>
+
+                  {ehNovo && (
+                    <span className="bg-orange-500/20 text-orange-400 text-xs px-3 py-1 rounded-full">
+                      Novo Hoje
+                    </span>
+                  )}
+                </div>
+
+                <div className="text-sm text-gray-400 space-y-1">
+                  <p>Email: {c.email_usuario}</p>
+                  <p>Data: {new Date(c.data_envio).toLocaleString("pt-BR")}</p>
+                </div>
+
+                {c.status === "enviado" ? (
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={()=>aprovar(c.slot_id)}
+                      className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl font-semibold"
+                    >
+                      Aprovar
+                    </button>
+
+                    <button
+                      onClick={()=>recusar(c.slot_id)}
+                      className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-xl font-semibold"
+                    >
+                      Recusar
+                    </button>
+                  </div>
+                ) : (
+                  <span
+                    className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                      c.status === "aprovado"
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-red-500/20 text-red-400"
+                    }`}
+                  >
+                    {c.status === "aprovado" ? "✔ Aprovado" : "✖ Recusado"}
+                  </span>
+                )}
+
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
+
       </div>
 
-      {/* MODAL IMAGEM */}
       {imagemAtiva && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-          <div className="relative max-w-4xl w-full px-4">
-            <button
-              onClick={() => setImagemAtiva(null)}
-              className="absolute -top-10 right-4 text-white"
-            >
-              ✕ Fechar
-            </button>
-
-            <img
-              src={imagemAtiva}
-              className="w-full max-h-[80vh] object-contain rounded-xl border border-gray-700"
-            />
-          </div>
+          <img
+            src={imagemAtiva}
+            className="max-w-4xl max-h-[80vh] object-contain rounded-xl"
+          />
         </div>
       )}
+
     </div>
   )
 }
