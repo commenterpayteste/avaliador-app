@@ -17,6 +17,16 @@ export default function Dashboard() {
   const [tempoRestante, setTempoRestante] = useState<number | null>(null)
   const [desistindo, setDesistindo] = useState(false)
   const [carregandoEmpresas, setCarregandoEmpresas] = useState(true)
+const [modoPopup, setModoPopup] = useState<"intro" | "tutorial">("intro")
+const [copiado, setCopiado] = useState(false)
+type Comentario = {
+  id: string
+  texto: string
+  ativo: boolean
+}
+
+const [comentarioSelecionado, setComentarioSelecionado] = useState<Comentario | null>(null)
+const [comentarioDoSlot, setComentarioDoSlot] = useState<any>(null)
 
   // 🔒 WHATSAPP (NÃO BLOQUEANTE)
   const [temWhatsapp, setTemWhatsapp] = useState<boolean | null>(null)
@@ -152,6 +162,20 @@ async function init() {
       .from("vw_empresas_disponiveis")
       .select("*")
 
+      // ADICIONADO AQUI 30-03
+      const { data: testeComentarios } = await supabase
+  .from("companies")
+  .select(`
+    id,
+    nome,
+    company_comment_templates (
+      id,
+      texto,
+      ativo
+    )
+  `)
+
+
     if (data) {
       setEmpresas(data)
       localStorage.setItem(CACHE_KEY, JSON.stringify(data))
@@ -171,6 +195,24 @@ async function init() {
       alert(error.message)
       return
     }
+
+    // 🔥 BUSCAR COMENTÁRIO DO SLOT (SEM USAR AINDA)
+const { data: slotData } = await supabase
+  .from("review_slots")
+  .select(`
+    id,
+    template_id,
+    company_comment_templates (
+      id,
+      texto
+    )
+  `)
+  .eq("id", data)
+  .single()
+
+
+// salva no state (ainda não usamos)
+setComentarioDoSlot(slotData?.company_comment_templates || null)
 
     localStorage.setItem(`inicio_${data}`, Date.now().toString())
     setEmpresaAtiva(empresa)
@@ -364,19 +406,88 @@ async function init() {
 
       {etapa === "popup1" && empresaAtiva && (
         <Modal>
-          <h2 className="text-xl font-bold text-[#1DB954]">🎉 Opa!</h2>
-          <p>Você vai ganhar <b>R$3,00</b> nessa avaliação</p>
+  {/* INTRO */}
+  {modoPopup === "intro" && (
+    <>
+      <h2 className="text-xl font-bold text-[#1DB954]">🎉 Opa!</h2>
+      <p>Você vai ganhar <b>R$3,00</b> nessa avaliação</p>
 
-          <button
-            onClick={() => {
-              window.open(empresaAtiva.link_maps, "_blank")
-              setEtapa("idle")
-            }}
-            className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
-          >
-            Avaliar empresa
-          </button>
-        </Modal>
+      <button
+        onClick={() => {
+          // 🔥 PRIORIDADE: usar comentário do slot (backend)
+if (comentarioDoSlot) {
+  setComentarioSelecionado(comentarioDoSlot)
+  setCopiado(false)
+  setModoPopup("tutorial")
+  return
+}
+
+// fallback antigo (não remove)
+const comentarios = empresaAtiva.company_comment_templates || []
+
+          if (comentarios.length > 0) {
+            const random =
+              comentarios[Math.floor(Math.random() * comentarios.length)]
+
+            setComentarioSelecionado(random)
+            setCopiado(false)
+            setModoPopup("tutorial")
+          } else {
+            window.open(empresaAtiva.link_maps, "_blank")
+            setEtapa("idle")
+          }
+        }}
+        className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
+      >
+        Continuar
+      </button>
+    </>
+  )}
+
+  {/* TUTORIAL */}
+  {modoPopup === "tutorial" && comentarioSelecionado && (
+    <>
+      <h2 className="text-lg font-bold text-yellow-400">
+        ⚠️ Atenção antes de avaliar
+      </h2>
+
+      <div className="text-sm text-gray-300 space-y-2">
+        <p>• Copie o comentário abaixo</p>
+        <p>• Cole exatamente no Google Maps</p>
+        <p>• Não altere o texto</p>
+      </div>
+
+      <div className="bg-[#2a2a2a] p-3 rounded-xl text-sm text-white">
+        {comentarioSelecionado.texto}
+      </div>
+
+      <button
+  onClick={() => {
+    navigator.clipboard.writeText(comentarioSelecionado.texto)
+    setCopiado(true)
+  }}
+  className={`w-full py-2 rounded-xl font-bold transition ${
+    copiado
+      ? "bg-green-500 text-black"
+      : "bg-yellow-400 text-black"
+  }`}
+>
+  {copiado ? "✔ Comentário copiado!" : "Copiar comentário"}
+</button>
+
+      <button
+        disabled={!copiado}
+        onClick={() => {
+          window.open(empresaAtiva.link_maps, "_blank")
+          setEtapa("idle")
+        }}
+        className="w-full bg-green-500 text-black py-3 rounded-xl font-bold disabled:opacity-50"
+      >
+        {copiado ? "Ir para o Maps" : "Copie o comentário primeiro"}
+      </button>
+    </>
+  )}
+</Modal>
       )}
 
       {etapa === "confirmar" && (

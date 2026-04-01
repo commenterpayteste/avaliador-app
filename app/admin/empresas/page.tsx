@@ -67,6 +67,10 @@ export default function AdminEmpresas() {
 
   /* lista */
   const [empresas, setEmpresas] = useState<EmpresaAdmin[]>([])
+  
+/* comentários personalizados mudei aqui*/
+const [comentariosAtivos, setComentariosAtivos] = useState(false)
+const [comentarios, setComentarios] = useState<string[]>([])
 
   useEffect(() => {
     if (aba !== "cadastrar") carregarEmpresas()
@@ -84,38 +88,78 @@ export default function AdminEmpresas() {
       setErro("Preencha todos os campos")
       return
     }
+setConfirmModal({
+  titulo: "Confirmar criação",
+  descricao: `
+📌 Empresa: ${nome}
 
-    setConfirmModal({
-      titulo: "Confirmar criação",
-      descricao: `Pacote: ${pacote}\nLimite diário: ${limiteDiario}`,
-      onConfirm: async () => {
-        setLoading(true)
+🔗 Link:
+${link}
 
-        const { error } = await supabase.rpc("admin_create_company", {
-          p_nome: nome,
-          p_link_maps: link,
-          p_pacote_limite: pacote,
-          p_limite_diario: limiteDiario,
-          p_ativa: ativaNova,
-        })
+📦 Pacote total: ${pacote}
+📊 Limite diário: ${limiteDiario}
 
-        setLoading(false)
-        setConfirmModal(null)
+💬 Comentários personalizados: ${
+  comentariosAtivos
+    ? `${comentarios.filter(c => c.trim() !== "").length} comentário(s)`
+    : "Não"
+}
 
-        if (error) {
-          setErro(error.message)
-          return
-        }
+${
+  comentariosAtivos && comentarios.length > 0
+    ? "📝 Lista:\n" +
+      comentarios
+        .filter(c => c.trim() !== "")
+        .map((c, i) => `${i + 1}. ${c}`)
+        .join("\n")
+    : ""
+}
+`,
+  onConfirm: async () => {
+    setLoading(true)
 
-        setNome("")
-        setLink("")
-        setPacote("")
-        setLimiteDiario("")
-        setAtivaNova(true)
-        setSucesso(true)
-      },
+    const { data: companyId, error } = await supabase.rpc("admin_create_company", {
+      p_nome: nome,
+      p_link_maps: link,
+      p_pacote_limite: pacote,
+      p_limite_diario: limiteDiario,
+      p_ativa: ativaNova,
     })
-  }
+
+    setLoading(false)
+    setConfirmModal(null)
+
+    if (error) {
+      setErro(error.message)
+      return
+    }
+
+    // 🔥 SALVAR COMENTÁRIOS
+    if (companyId && comentariosAtivos && comentarios.length > 0) {
+      const comentariosValidos = comentarios.filter(c => c.trim() !== "")
+
+      const payload = comentariosValidos.map(c => ({
+        company_id: companyId,
+        texto: c.trim(),
+        ativo: true
+      }))
+
+      await supabase
+        .from("company_comment_templates")
+        .insert(payload)
+    }
+
+    setNome("")
+    setLink("")
+    setPacote("")
+    setLimiteDiario("")
+    setAtivaNova(true)
+    setSucesso(true)
+    setComentarios([])
+    setComentariosAtivos(false)
+  },
+})
+}
 
   /* =========================
      EDITAR
@@ -196,12 +240,60 @@ export default function AdminEmpresas() {
 
         {/* CADASTRO */}
         {aba === "cadastrar" && (
+          
           <div className="bg-[#161a21] border border-[#222] rounded-2xl p-8 max-w-lg shadow-xl space-y-5">
             <Input label="Nome da empresa" value={nome} onChange={setNome} />
             <Input label="Link Google Maps" value={link} onChange={setLink} />
             <Input label="Pacote total" type="number" value={pacote} onChange={(v) => setPacote(Number(v))} />
             <Input label="Limite diário" type="number" value={limiteDiario} onChange={(v) => setLimiteDiario(Number(v))} />
 
+{/* COMENTÁRIOS PERSONALIZADOS MEXI AQUI*/}
+<div className="bg-[#1c1f26] border border-[#2a2a2a] rounded-xl p-4 space-y-3">
+
+  <div className="flex justify-between items-center">
+    <span className="text-sm text-gray-300">
+      Usar comentários personalizados
+    </span>
+
+    <button
+      type="button"
+      onClick={() => setComentariosAtivos(!comentariosAtivos)}
+      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+        comentariosAtivos
+          ? "bg-green-500 text-black"
+          : "bg-gray-600 text-white"
+      }`}
+    >
+      {comentariosAtivos ? "Ativo" : "Desligado"}
+    </button>
+  </div>
+
+  {comentariosAtivos && (
+    <div className="space-y-2">
+      {comentarios.map((c, i) => (
+        <input
+          key={i}
+          value={c}
+          onChange={(e) => {
+            const novos = [...comentarios]
+            novos[i] = e.target.value
+            setComentarios(novos)
+          }}
+          placeholder={`Comentário ${i + 1}`}
+          className="w-full bg-[#111] border border-[#333] rounded-lg px-3 py-2 text-sm"
+        />
+      ))}
+
+      <button
+        type="button"
+        onClick={() => setComentarios([...comentarios, ""])}
+        className="text-xs text-green-400"
+      >
+        + adicionar comentário
+      </button>
+    </div>
+  )}
+</div>
             {erro && <Alert color="red" text={erro} />}
             {sucesso && <Alert color="green" text="Empresa cadastrada com sucesso" />}
 
