@@ -183,22 +183,20 @@ export default function Sucesso() {
             className="w-20 h-20 mb-6"
           />
 
-          <div className="bg-black rounded-2xl p-6 w-full max-w-md text-center mb-4">
-            <p className="text-xl font-semibold">
-              Parabéns!{" "}
-              <span className="text-green-400">
-                Você ganhou R$3,00
-              </span>{" "}
-              continue assim!
-            </p>
-          </div>
+          <p className="text-xl font-semibold">
+  💰 Você ganhou <span className="text-green-400">R$3,00</span>
+</p>
+
+<p className="text-sm text-gray-400 mt-2">
+  Continue avaliando para acumular mais saldo
+</p>
 
           <div className="bg-[#2a2a2a] rounded-xl p-4 w-full max-w-md text-center text-sm text-gray-300 mb-4 space-y-2">
             <p>✅ Sua avaliação foi enviada com sucesso e já está em análise.</p>
 
             {!temPix && (
               <p className="text-orange-400 font-semibold">
-                ⚠️ Para receber o dinheiro, é necessário cadastrar uma chave PIX.
+                ⚠️ Para sacar o seu saldo, cadastre sua chave PIX
               </p>
             )}
 
@@ -213,7 +211,7 @@ export default function Sucesso() {
               onClick={() => router.push("/dashboard")}
               className="bg-green-400 text-black font-bold px-6 py-3 rounded-xl w-full max-w-md"
             >
-              AVALIAR OUTRA E GANHAR MAIS R$3,00
+              GANHAR MAIS R$3,00 AGORA
             </button>
           ) : (
             <div className="w-full max-w-md space-y-3">

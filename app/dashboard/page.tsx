@@ -159,8 +159,13 @@ async function init() {
     setCarregandoEmpresas(true)
 
     const { data } = await supabase
-      .from("vw_empresas_disponiveis")
-      .select("*")
+  .from("vw_empresas_disponiveis")
+  .select(`
+    *,
+    company_comment_templates (
+      id
+    )
+  `)
 
       // ADICIONADO AQUI 30-03
       const { data: testeComentarios } = await supabase
@@ -363,10 +368,19 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
                 key={e.id}
                 className="bg-[#181818] border border-[#2a2a2a] rounded-2xl p-4"
               >
-                <h2 className="font-semibold">{e.nome}</h2>
+                <div className="flex items-center justify-between">
+  <h2 className="font-semibold">{e.nome}</h2>
+
+  {e.company_comment_templates?.length > 0 && (
+    <span className="text-[10px] font-semibold px-2 py-1 rounded-full border border-yellow-500/60 text-yellow-400">
+     EMPRESA PREMIUM
+    </span>
+  )}
+</div>
                 <p className="text-sm text-gray-400">
                   Vagas: {e.vagas_disponiveis}
                 </p>
+
 
                 <button
                   onClick={() => reservar(e)}
@@ -409,8 +423,21 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
   {/* INTRO */}
   {modoPopup === "intro" && (
     <>
-      <h2 className="text-xl font-bold text-[#1DB954]">🎉 Opa!</h2>
-      <p>Você vai ganhar <b>R$3,00</b> nessa avaliação</p>
+      <h2 className="text-lg font-bold text-[#1DB954]">
+  💰 Missão disponível
+</h2>
+
+<p className="text-sm text-gray-300">
+  Você vai avaliar:
+</p>
+
+<p className="text-white font-semibold text-base">
+  {empresaAtiva.nome}
+</p>
+
+<p className="text-sm text-gray-400">
+  Siga o passo a passo para garantir seu pagamento de <b>R$3,00</b>
+</p>
 
       <button
         onClick={() => {
@@ -448,18 +475,23 @@ const comentarios = empresaAtiva.company_comment_templates || []
   {modoPopup === "tutorial" && comentarioSelecionado && (
     <>
       <h2 className="text-lg font-bold text-yellow-400">
-        ⚠️ Atenção antes de avaliar
-      </h2>
+  📋 Siga os passos
+</h2>
 
-      <div className="text-sm text-gray-300 space-y-2">
-        <p>• Copie o comentário abaixo</p>
-        <p>• Cole exatamente no Google Maps</p>
-        <p>• Não altere o texto</p>
-      </div>
+<div className="text-sm text-gray-300 space-y-2 text-left">
+  <p>1️⃣ Copie o comentário abaixo</p>
+  <p>2️⃣ Abra a empresa no botão abaixo</p>
+  <p>3️⃣ Cole exatamente o comentário</p>
+  <p>4️⃣ Não altere o texto</p>
+</div>
 
-      <div className="bg-[#2a2a2a] p-3 rounded-xl text-sm text-white">
-        {comentarioSelecionado.texto}
-      </div>
+<div className="bg-[#111] border border-[#2a2a2a] p-2 rounded-xl text-xs text-gray-400">
+  Empresa: <span className="text-white">{empresaAtiva.nome}</span>
+</div>
+
+<div className="bg-[#1a1a1a] border border-[#333] p-3 rounded-xl text-sm text-white text-left">
+  {comentarioSelecionado.texto}
+</div>
 
       <button
   onClick={() => {
@@ -483,7 +515,7 @@ const comentarios = empresaAtiva.company_comment_templates || []
         }}
         className="w-full bg-green-500 text-black py-3 rounded-xl font-bold disabled:opacity-50"
       >
-        {copiado ? "Ir para o Maps" : "Copie o comentário primeiro"}
+        {copiado ? "Iniciar Avaliaçã e Ganhar" : "Copie o comentário primeiro"}
       </button>
     </>
   )}
