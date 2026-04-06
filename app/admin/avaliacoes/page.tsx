@@ -163,7 +163,12 @@ export default function Admin() {
                 {c.status === "enviado" ? (
                   <div className="flex gap-3 pt-2">
                     <button
-                      onClick={()=>aprovar(c.slot_id)}
+                      onClick={() => {
+  const ok = confirm("Tem certeza que deseja APROVAR este comentário?")
+  if (!ok) return
+
+  aprovar(c.slot_id)
+}}
                       className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl font-semibold"
                     >
                       Aprovar

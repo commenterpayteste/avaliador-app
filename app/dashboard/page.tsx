@@ -10,6 +10,7 @@ const CACHE_KEY = "empresas_cache"
 
 export default function Dashboard() {
   const [empresas, setEmpresas] = useState<any[]>([])
+  const [notificacao, setNotificacao] = useState<string | null>(null) //notificacoes
   const [empresaAtiva, setEmpresaAtiva] = useState<any>(null)
   const [slotId, setSlotId] = useState<string | null>(null)
   const [etapa, setEtapa] = useState<Etapa>("idle")
@@ -36,10 +37,63 @@ const [comentarioDoSlot, setComentarioDoSlot] = useState<any>(null)
 
   const router = useRouter()
 
+  const nomes = [
+  "João", "Maria", "Carlos", "Ana", "Pedro",
+  "Lucas", "Fernanda", "Rafael", "Juliana",
+  "Bruno", "Camila", "Diego", "Larissa",
+  "André", "Beatriz", "Matheus", "Aline",
+  "Rodrigo", "Patrícia", "Gustavo"
+]
+
+const acoes = [
+  "acabou de sacar",
+  "ganhou",
+  "avaliou uma empresa",
+  "já acumulou",
+  "realizou um saque de"
+]
+
+const valores = [3, 6, 9, 12, 15, 18, 21, 30, 45, 69, 105]
+
   useEffect(() => {
     init()
     verificarWhatsapp()
   }, [])
+
+  function gerarMensagem() {
+  const nome = nomes[Math.floor(Math.random() * nomes.length)]
+  const acao = acoes[Math.floor(Math.random() * acoes.length)]
+
+  // se for ação sem valor
+  if (acao === "avaliou uma empresa") {
+    return `🔥 ${nome} avaliou uma empresa`
+  }
+
+  const valor = valores[Math.floor(Math.random() * valores.length)]
+
+  return `💰 ${nome} ${acao} R$${valor},00`
+}
+
+  useEffect(() => { //intervalo notificacao
+  function mostrarNotificacao() {
+    const mensagem = gerarMensagem()
+    setNotificacao(mensagem)
+
+    // tempo visível
+    setTimeout(() => {
+      setNotificacao(null)
+    }, 8000) // fica 8s na tela
+  }
+
+  // mostra primeira
+  mostrarNotificacao()
+
+  const interval = setInterval(() => {
+    mostrarNotificacao()
+  }, 15000) // nova a cada 15s
+
+  return () => clearInterval(interval)
+}, [])
 
   // =========================
   // VERIFICAR WHATSAPP
@@ -586,6 +640,12 @@ const comentarios = empresaAtiva.company_comment_templates || []
           </div>
         </Modal>
       )}
+      {/* 🔥 NOTIFICAÇÕES */}
+{notificacao && (
+  <div className="fixed top-5 right-5 z-50 bg-[#1a1a1a] border border-[#333] text-white text-base px-5 py-3 max-w-[280px] rounded-xl shadow-lg">
+    {notificacao}
+  </div>
+)}
     </div>
   )
 }

@@ -13,6 +13,8 @@ type Saque = {
   pix_key: string
   created_at: string
   paid_at?: string
+  notificado?: boolean // 🔥 ADICIONA ISSO
+  whatsapp?: string
 }
 
 type UsuarioSaldo = {
@@ -213,6 +215,7 @@ export default function PagamentosAdmin() {
                 </div>
 
                 <div className="text-right space-y-2">
+                  
                   <p className="text-lg font-bold">
                     {formatarValor(u.saldo_disponivel)}
                   </p>
@@ -258,21 +261,65 @@ export default function PagamentosAdmin() {
                     </p>
                   </div>
 
-                  <div className="text-right space-y-2">
-                    <p className="text-lg font-bold">
-                      {formatarValor(s.valor)}
-                    </p>
+                 <div className="text-right space-y-2">
+  {/* 💰 VALOR */}
+  <p className="text-lg font-bold">
+    {formatarValor(s.valor)}
+  </p>
 
-                    {filtro === "pendente" && (
-                      <button
-                        onClick={() => marcarPago(s.id)}
-                        className="bg-green-400 text-black px-4 py-2 rounded-lg font-bold"
-                      >
-                        MARCAR COMO PAGO
-                      </button>
-                    )}
-                  </div>
+  {/* 🔔 STATUS */}
+  {s.notificado ? (
+    <p className="text-green-400 text-xs">
+      ✔ Avisado no WhatsApp
+    </p>
+  ) : (
+    <p className="text-yellow-400 text-xs">
+      Aguardando aviso
+    </p>
+  )}
+
+  {/* 🔘 BOTÃO AVISAR */}
+  {s.whatsapp ? (
+  !s.notificado && (
+    <button
+      onClick={async () => {
+        const msg = `💰 Seu saque foi enviado!\n\nValor: ${formatarValor(
+          s.valor
+        )}\n\nObrigado por usar a plataforma 🙌`
+
+        navigator.clipboard.writeText(msg)
+
+        window.open(`https://wa.me/55${s.whatsapp}`, "_blank")
+
+        await supabase
+          .from("withdraw_requests")
+          .update({ notificado: true })
+          .eq("id", s.id)
+
+        carregarDados()
+      }}
+      className="bg-yellow-400 text-black px-3 py-1 rounded text-xs font-bold"
+    >
+      AVISAR
+    </button>
+  )
+) : (
+  <p className="text-red-400 text-xs">Sem WhatsApp</p>
+)}
+
+  {/* 🔘 BOTÃO MARCAR COMO PAGO */}
+  {filtro === "pendente" && (
+    <button
+      onClick={() => marcarPago(s.id)}
+      className="bg-green-400 text-black px-4 py-2 rounded-lg font-bold"
+    >
+      MARCAR COMO PAGO
+    </button>
+  )}
+</div>
+
                 </div>
+                
               ))}
             </div>
           )}
