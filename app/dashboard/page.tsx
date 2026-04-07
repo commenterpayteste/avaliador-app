@@ -10,6 +10,7 @@ const CACHE_KEY = "empresas_cache"
 
 export default function Dashboard() {
   const [empresas, setEmpresas] = useState<any[]>([])
+  const [saldo, setSaldo] = useState(0)
   const [notificacao, setNotificacao] = useState<string | null>(null) //notificacoes
   const [empresaAtiva, setEmpresaAtiva] = useState<any>(null)
   const [slotId, setSlotId] = useState<string | null>(null)
@@ -178,6 +179,13 @@ async function init() {
     router.push("/login")
     return
   }
+const { data: wallet } = await supabase
+  .from("wallets")
+  .select("saldo_disponivel")
+  .eq("user_id", user.id)
+  .maybeSingle()
+
+setSaldo(wallet?.saldo_disponivel || 0)
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -321,9 +329,30 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
 
   return (
     <div className="min-h-screen bg-[#121212] text-white pb-28">
-      <header className="py-6 flex justify-center">
-        <img src="/icons/commenter1.png" alt="Commenter Pay" className="h-10 object-contain" />
-      </header>
+<header className="py-6 px-4 flex items-center justify-between">
+  
+  <img
+    src="/icons/commenter1.png"
+    alt="Commenter Pay"
+    className="h-10 object-contain"
+  />
+
+  <div className="bg-[#111] px-4 py-3 rounded-2xl flex items-center gap-3 min-w-[180px]">
+    <p className="text-xs text-gray-400 whitespace-nowrap">
+      Saldo aprovado
+    </p>
+
+    <p className="text-green-400 font-bold text-lg">
+      R$ {saldo.toFixed(2)}
+    </p>
+  </div>
+</header>
+
+{notificacao && (
+  <div className="mx-4 mt-2 mb-4 bg-[#1a1a1a] border border-[#333] text-white text-sm px-4 py-2 rounded-xl">
+        {notificacao}
+  </div>
+ )}
 
             {/* 🔥 GRUPO VIP COMMENTERPAY (PRIORIDADE) */}
       <div className="mx-4 mb-4">
@@ -641,11 +670,7 @@ const comentarios = empresaAtiva.company_comment_templates || []
         </Modal>
       )}
       {/* 🔥 NOTIFICAÇÕES */}
-{notificacao && (
-  <div className="fixed top-5 right-5 z-50 bg-[#1a1a1a] border border-[#333] text-white text-base px-5 py-3 max-w-[280px] rounded-xl shadow-lg">
-    {notificacao}
-  </div>
-)}
+
     </div>
   )
 }

@@ -27,10 +27,13 @@ export default function Ganhos() {
   const [saldoAnalise, setSaldoAnalise] = useState(0)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+const [ganhosHoje, setGanhosHoje] = useState(0)
 
   useEffect(() => {
     carregarDados()
   }, [])
+
+  
 
   async function carregarDados() {
     const {
@@ -42,12 +45,14 @@ export default function Ganhos() {
       return
     }
 
+
     const { data: walletData } = await supabase
       .from("wallets")
       .select("saldo_disponivel, saldo_total")
       .eq("user_id", user.id)
       .maybeSingle()
 
+      
     const { data: historicoData } = await supabase
       .from("wallet_transactions")
       .select("id, valor, created_at")

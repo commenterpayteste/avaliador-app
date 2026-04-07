@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 export default function Perfil() {
   const [nome, setNome] = useState<string>("")
+  const [saldo, setSaldo] = useState(0)
   const router = useRouter()
 
   useEffect(() => {
@@ -28,6 +29,14 @@ export default function Perfil() {
       "Usuário"
 
     setNome(nomeUsuario)
+// saldo topo
+    const { data: wallet } = await supabase
+  .from("wallets")
+  .select("saldo_disponivel")
+  .eq("user_id", user.id)
+  .maybeSingle()
+
+setSaldo(wallet?.saldo_disponivel || 0)
 
     // mantém como já estava
     await supabase
@@ -46,13 +55,15 @@ export default function Perfil() {
           <p className="text-white text-xl font-bold">{nome}</p>
         </div>
 
-        <div className="w-12 h-12 rounded-xl bg-black flex items-center justify-center">
-          <img
-            src="/icons/userverde.svg"
-            alt="Perfil"
-            className="w-6 h-6"
-          />
-        </div>
+        <div className="bg-[#111] px-4 py-3 rounded-2xl flex items-center gap-3 min-w-[180px]">
+  <p className="text-xs text-gray-00">
+    Saldo aprovado
+  </p>
+
+  <p className="text-green-400 font-bold text-lg">
+    R$ {saldo.toFixed(2)}
+  </p>
+</div>
       </div>
 
       {/* 🔔 WIDGETS EXPLICATIVOS */}
