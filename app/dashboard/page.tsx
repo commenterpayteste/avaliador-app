@@ -12,6 +12,7 @@ export default function Dashboard() {
   const [empresas, setEmpresas] = useState<any[]>([])
   const [saldo, setSaldo] = useState(0)
   const [notificacao, setNotificacao] = useState<string | null>(null) //notificacoes
+  const [somAtivo, setSomAtivo] = useState(true)
   const [empresaAtiva, setEmpresaAtiva] = useState<any>(null)
   const [slotId, setSlotId] = useState<string | null>(null)
   const [etapa, setEtapa] = useState<Etapa>("idle")
@@ -56,10 +57,16 @@ const acoes = [
 
 const valores = [3, 6, 9, 12, 15, 18, 21, 30, 45, 69, 105]
 
-  useEffect(() => {
-    init()
-    verificarWhatsapp()
-  }, [])
+useEffect(() => {
+  init()
+  verificarWhatsapp()
+
+  const somSalvo = localStorage.getItem("som_notificacao")
+
+  if (somSalvo === "off") {
+    setSomAtivo(false)
+  }
+}, [])
 
   function gerarMensagem() {
   const nome = nomes[Math.floor(Math.random() * nomes.length)]
@@ -80,11 +87,13 @@ const valores = [3, 6, 9, 12, 15, 18, 21, 30, 45, 69, 105]
     const mensagem = gerarMensagem()
     setNotificacao(mensagem)
 
-    // tempo visível
-    setTimeout(() => {
-      setNotificacao(null)
-    }, 8000) // fica 8s na tela
-  }
+    // som notificação
+if (localStorage.getItem("som_notificacao") !== "off") {
+  const audio = new Audio("/sounds/cash.mp3")
+  audio.volume = 0.4
+  audio.play().catch(() => {})
+}
+}
 
   // mostra primeira
   mostrarNotificacao()
@@ -349,9 +358,32 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
 </header>
 
 {notificacao && (
-  <div className="mx-4 mt-2 mb-4 bg-[#1a1a1a] border border-[#333] text-white text-sm px-4 py-2 rounded-xl">
-        {notificacao}
-  </div>
+<div
+  key={notificacao}
+  className="mx-4 mt-2 mb-4 bg-[#1a1a1a] border border-[#333] text-white text-sm px-4 py-3 rounded-xl flex items-center justify-between animate-popIn"
+>
+  <p className="text-gray-200">
+    {notificacao}
+  </p>
+
+  <button
+    onClick={() => {
+      const atual = localStorage.getItem("som_notificacao")
+
+      if (atual === "off") {
+        localStorage.setItem("som_notificacao", "on")
+        setSomAtivo(true)
+      } else {
+        localStorage.setItem("som_notificacao", "off")
+        setSomAtivo(false)
+      }
+    }}
+    className="text-xs px-3 py-1 rounded-full bg-[#2a2a2a] hover:bg-[#333] transition whitespace-nowrap"
+  >
+    {somAtivo ? "🔇 Silenciar Notificação" : "🔊 Ativar Notificação"}
+  </button>
+
+</div>  
  )}
 
             {/* 🔥 GRUPO VIP COMMENTERPAY (PRIORIDADE) */}
