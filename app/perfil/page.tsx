@@ -96,66 +96,54 @@ setSaldo(wallet?.saldo_disponivel || 0)
       {/* CONTAINER DOS BOTÕES */}
       <div className="bg-black rounded-2xl p-4 space-y-4">
 
-        {/* GRID SUPERIOR */}
-        <div className="grid grid-cols-2 gap-4">
+        {/* GRID COMPLETO */}
+<div className="grid grid-cols-2 gap-4">
 
-          {/* SEUS DADOS */}
-          <button
-            onClick={() => router.push("/dados")}
-            className="rounded-xl bg-[#2a2a2a] h-24 flex flex-col items-center justify-center active:scale-95 transition"
-          >
-            <img
-              src="/icons/userverde.svg"
-              alt="Seus dados"
-              className="w-7 h-7 mb-2"
-            />
-            <span className="text-green-400 text-sm font-semibold">
-              Seus dados
-            </span>
-          </button>
+  {/* SEUS DADOS */}
+  <button
+    onClick={() => router.push("/dados")}
+    className="rounded-xl bg-[#2a2a2a] h-24 flex flex-col items-center justify-center active:scale-95 transition"
+  >
+    <img src="/icons/userverde.svg" className="w-7 h-7 mb-2" />
+    <span className="text-green-400 text-sm font-semibold">
+      Seus dados
+    </span>
+  </button>
 
-          {/* AVALIAÇÕES */}
-          <button
-            onClick={() => router.push("/avaliacoes")}
-            className="rounded-xl bg-[#2a2a2a] h-24 flex flex-col items-center justify-center active:scale-95 transition"
-          >
-            <img
-              src="/icons/starverde.svg"
-              alt="Avaliações"
-              className="w-7 h-7 mb-2"
-            />
-            <span className="text-green-400 text-sm font-semibold">
-              Suas Avaliações
-            </span>
-          </button>
-        </div>
+  {/* AVALIAÇÕES */}
+  <button
+    onClick={() => router.push("/avaliacoes")}
+    className="rounded-xl bg-[#2a2a2a] h-24 flex flex-col items-center justify-center active:scale-95 transition"
+  >
+    <img src="/icons/starverde.svg" className="w-7 h-7 mb-2" />
+    <span className="text-green-400 text-sm font-semibold">
+      Suas Avaliações
+    </span>
+  </button>
 
-        {/* GANHOS */}
-        <button
-          onClick={() => router.push("/ganhos")}
-          className="w-full rounded-2xl bg-[#2a2a2a] h-20 flex items-center justify-center gap-3 active:scale-95 transition"
-        >
-          <img
-            src="/icons/cash.svg"
-            alt="Ganhos"
-            className="w-6 h-6"
-          />
-          <span className="text-green-400 font-semibold">
-            Seus Ganhos
-          </span>
-        </button>
+  {/* GANHOS */}
+  <button
+    onClick={() => router.push("/ganhos")}
+    className="rounded-xl bg-[#2a2a2a] h-24 flex flex-col items-center justify-center active:scale-95 transition"
+  >
+    <img src="/icons/cash.svg" className="w-7 h-7 mb-2" />
+    <span className="text-green-400 text-sm font-semibold">
+      Seus Ganhos
+    </span>
+  </button>
 
-        {/* Faq */}
+  {/* FAQ */}
+  <button
+    onClick={() => router.push("/faq")}
+    className="rounded-xl bg-[#2a2a2a] h-24 flex flex-col items-center justify-center active:scale-95 transition"
+  >
+    <img src="/icons/icon.png" className="w-7 h-7 mb-2" />
+    <span className="text-green-400 text-sm font-semibold">
+      Dúvidas Frequentes
+    </span>
+  </button>
 
-<button
-  onClick={() => router.push("/faq")}
-          className="w-full rounded-2xl bg-[#2a2a2a] h-20 flex items-center justify-center gap-3 active:scale-95 transition"
->
-  <span className="text-green-400 font-semibold">
-              ❓ Dúvidas Frequentes
-          </span>
-</button>
-
+</div>
       </div>
     </div>
   )
