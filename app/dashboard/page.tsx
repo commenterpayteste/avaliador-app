@@ -415,11 +415,11 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
           <div className="bg-[#1a1a1a] border border-green-400/40 rounded-2xl p-4">
 
             <p className="text-green-400 font-semibold text-xs mb-1">
-              Complete seu cadastro
+              Complete seu cadastro em 10 segundos
             </p>
 
             <p className="text-gray-400 text-xs mb-3">
-              Cadastre seu WhatsApp para receber avisos de aprovação.
+              Cadastre seu WhatsApp para receber seus pagamentos e comprovantes direto no celular.
             </p>
 
             <button
@@ -701,8 +701,18 @@ const comentarios = empresaAtiva.company_comment_templates || []
           </div>
         </Modal>
       )}
-      {/* 🔥 NOTIFICAÇÕES */}
-
+      {/* 🔥 ZAP BUTTON */}
+<a
+  href="https://wa.me/82996265512"
+  target="_blank"
+  className="fixed bottom-24 right-4 bg-green-500 hover:bg-green-600 p-3 rounded-full shadow-lg z-50 flex items-center justify-center shadow-lg hover:scale-110 transition"
+>
+  <img
+    src="/icons/zap.png"
+    alt="WhatsApp"
+    className="w-10 h-10"
+  />
+</a>
     </div>
   )
 }

@@ -145,6 +145,17 @@ setSaldo(wallet?.saldo_disponivel || 0)
           </span>
         </button>
 
+        {/* Faq */}
+
+<button
+  onClick={() => router.push("/faq")}
+          className="w-full rounded-2xl bg-[#2a2a2a] h-20 flex items-center justify-center gap-3 active:scale-95 transition"
+>
+  <span className="text-green-400 font-semibold">
+              ❓ Dúvidas Frequentes
+          </span>
+</button>
+
       </div>
     </div>
   )
