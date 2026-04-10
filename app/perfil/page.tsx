@@ -56,7 +56,7 @@ setSaldo(wallet?.saldo_disponivel || 0)
         </div>
 
         <div className="bg-[#111] px-4 py-3 rounded-2xl flex items-center gap-3 min-w-[180px]">
-  <p className="text-xs text-gray-00">
+  <p className="text-xs text-gray-400">
     Saldo aprovado
   </p>
 
@@ -144,6 +144,19 @@ setSaldo(wallet?.saldo_disponivel || 0)
   </button>
 
 </div>
+
+{/* SUPORTE */}
+<a
+  href="https://wa.me/82982192694"
+  target="_blank"
+  className="w-full mt-2 bg-green-500 hover:bg-green-600 text-black py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-95 transition"
+>
+  <img
+    src="/icons/zap.png"
+    className="w-5 h-5"
+  />
+  Falar com suporte
+</a>
       </div>
     </div>
   )
