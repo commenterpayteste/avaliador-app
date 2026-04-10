@@ -67,13 +67,18 @@ const [ganhosHoje, setGanhosHoje] = useState(0)
       .eq("status", "pendente")
       .maybeSingle()
 
-    const { count } = await supabase
-      .from("review_slots")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("status", "enviado")
+   const { data } = await supabase
+  .from("review_slots")
+  .select("template_id")
+  .eq("user_id", user.id)
+  .eq("status", "enviado")
 
-    setSaldoAnalise((count || 0) * 3)
+
+   const total = (data || []).reduce((acc, item) => {
+  return acc + (item.template_id ? 4 : 3)
+}, 0)
+
+    setSaldoAnalise(total)
     setWallet(walletData || { saldo_disponivel: 0, saldo_total: 0 })
     setHistorico(historicoData || [])
     setSaquePendente(saque ?? null)

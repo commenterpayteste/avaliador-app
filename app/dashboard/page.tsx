@@ -501,7 +501,7 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
                   onClick={() => reservar(e)}
                   className="mt-4 w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
                 >
-                  Avaliar e Ganhar R$3,00
+                  Avaliar e Ganhar R${e.company_comment_templates?.length > 0 ? 4 : 3},00
                 </button>
               </div>
             ))}
@@ -551,7 +551,7 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
 </p>
 
 <p className="text-sm text-gray-400">
-  Siga o passo a passo para garantir seu pagamento de <b>R$3,00</b>
+  Siga o passo a passo para garantir seu pagamento de <b>R${empresaAtiva?.company_comment_templates?.length > 0 ? 4 : 3},00</b>
 </p>
 
       <button
@@ -661,7 +661,7 @@ const comentarios = empresaAtiva.company_comment_templates || []
             onClick={() => router.push(`/enviar/${slotId}`)}
             className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
           >
-            Resgatar R$3,00
+            Resgatar R${empresaAtiva?.company_comment_templates?.length > 0 ? 4 : 3},00
           </button>
         </Modal>
       )}

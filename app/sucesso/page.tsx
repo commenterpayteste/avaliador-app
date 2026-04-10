@@ -184,7 +184,7 @@ export default function Sucesso() {
           />
 
           <p className="text-xl font-semibold">
-  💰 Você ganhou <span className="text-green-400">R$3,00</span>
+  💰 Você ganhou, <span className="text-green-400">CONTINUE ASSIM!</span>
 </p>
 
 <p className="text-sm text-gray-400 mt-2">
@@ -211,7 +211,7 @@ export default function Sucesso() {
               onClick={() => router.push("/dashboard")}
               className="bg-green-400 text-black font-bold px-6 py-3 rounded-xl w-full max-w-md"
             >
-              GANHAR MAIS R$3,00 AGORA
+              VOLTAR A GANHAR MAIS
             </button>
           ) : (
             <div className="w-full max-w-md space-y-3">
