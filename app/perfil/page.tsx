@@ -147,7 +147,7 @@ setSaldo(wallet?.saldo_disponivel || 0)
 
 {/* SUPORTE */}
 <a
-  href="https://wa.me/82982192694"
+  href="https://wa.link/sjoe8h"
   target="_blank"
   className="w-full mt-2 bg-green-500 hover:bg-green-600 text-black py-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 shadow-md active:scale-95 transition"
 >

@@ -391,12 +391,12 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
         <div className="bg-[#1f1f1f] border border-orange-500 rounded-2xl p-5">
 
           <p className="text-orange-400 font-bold text-sm text-center mb-2">
-            🔥 GRUPO VIP COMMENTERPAY
+             🚀 Estamos em fase de testes 🔥
           </p>
 
           <p className="text-gray-300 text-xs text-center mb-4">
-            Receba novas empresas antes de todo mundo,
-            avisos de pagamento e suporte direto.
+             Novas avaliações são liberadas em horários específicos.
+             Entre no grupo para ser avisado primeiro e garantir suas vagas.
           </p>
 
           <a
