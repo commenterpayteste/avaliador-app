@@ -507,9 +507,9 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
             ))}
 
           {!carregandoEmpresas && (
-            <p className="text-xs text-gray-500 text-center mt-6">
-              🔄 Novas empresas podem aparecer a qualquer momento
-            </p>
+            <p className="text-xs text-yellow-400 text-center mt-6">
+  ⚠️ Nenhuma avaliação disponível agora — novas vagas são liberadas ao longo do dia
+</p>
           )}
         </div>
       )}
