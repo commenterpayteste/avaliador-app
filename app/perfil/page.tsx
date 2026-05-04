@@ -55,14 +55,30 @@ setSaldo(wallet?.saldo_disponivel || 0)
           <p className="text-white text-xl font-bold">{nome}</p>
         </div>
 
-        <div className="bg-[#111] px-4 py-3 rounded-2xl flex items-center gap-3 min-w-[180px]">
-  <p className="text-xs text-gray-400">
-    Saldo aprovado
-  </p>
+        <div className="flex items-center gap-2">
 
-  <p className="text-green-400 font-bold text-lg">
-    R$ {saldo.toFixed(2)}
-  </p>
+  {/* BOTÃO SAIR */}
+  <button
+  onClick={async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+  }}
+  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-5 h-[48px] rounded-xl transition flex items-center justify-center"
+>
+  Sair da Conta
+</button>
+
+  {/* SALDO */}
+  <div className="bg-[#111] px-4 py-3 rounded-2xl flex items-center gap-3 min-w-[150px]">
+    <p className="text-xs text-gray-400">
+      Saldo aprovado
+    </p>
+
+    <p className="text-green-400 font-bold text-lg">
+      R$ {saldo.toFixed(2)}
+    </p>
+  </div>
+
 </div>
       </div>
 
