@@ -61,12 +61,46 @@ useEffect(() => {
   init()
   verificarWhatsapp()
 
+
   const somSalvo = localStorage.getItem("som_notificacao")
 
   if (somSalvo === "off") {
     setSomAtivo(false)
   }
 }, [])
+
+useEffect(() => {
+  const channel = supabase
+    .channel('realtime-empresas')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'companies',
+      },
+      () => {
+        fetchEmpresas()
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'company_comment_templates',
+      },
+      () => {
+        fetchEmpresas()
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
+
 
   function gerarMensagem() {
   const nome = nomes[Math.floor(Math.random() * nomes.length)]
@@ -231,12 +265,7 @@ setSaldo(wallet?.saldo_disponivel || 0)
 
     const { data } = await supabase
   .from("vw_empresas_disponiveis")
-  .select(`
-    *,
-    company_comment_templates (
-      id
-    )
-  `)
+  .select("*")
 
       // ADICIONADO AQUI 30-03
       const { data: testeComentarios } = await supabase
@@ -296,8 +325,12 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
     setMissaoAtiva(true)
     setEtapa("popup1")
     setTempoRestante(TEMPO_MAX)
+
+    // 🔥 ATUALIZA IMEDIATAMENTE
+await fetchEmpresas()
   }
 
+  
   async function desistir() {
     if (!slotId || desistindo) return
 
@@ -478,7 +511,17 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
           )}
 
           {!carregandoEmpresas &&
-            empresas.map((e) => (
+            empresas.map((e) => {
+              
+               if (process.env.NODE_ENV === "development") {
+  console.log("EMPRESA:", e.nome)
+  console.log("DADO ATUAL:", e)
+  console.log("TEMPLATES:", e.company_comment_templates
+    
+  )
+}
+
+    return (
               <div
                 key={e.id}
                 className="bg-[#181818] border border-[#2a2a2a] rounded-2xl p-4"
@@ -492,6 +535,7 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
     </span>
   )}
 </div>
+
                 <p className="text-sm text-gray-400">
                   Vagas: {e.vagas_disponiveis}
                 </p>
@@ -504,7 +548,9 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
                   Avaliar e Ganhar R${e.company_comment_templates?.length > 0 ? 4 : 3},00
                 </button>
               </div>
-            ))}
+              )
+            })
+          }
 
           {!carregandoEmpresas && (
             <p className="text-xs text-yellow-400 text-center mt-6">
@@ -551,7 +597,7 @@ setComentarioDoSlot(slotData?.company_comment_templates || null)
 </p>
 
 <p className="text-sm text-gray-400">
-  Siga o passo a passo para garantir seu pagamento de <b>R${empresaAtiva?.company_comment_templates?.length > 0 ? 4 : 3},00</b>
+  Siga o passo a passo para garantir seu pagamento de <b>R${comentarioDoSlot ? 4 : 3},00</b>
 </p>
 
       <button
@@ -661,7 +707,7 @@ const comentarios = empresaAtiva.company_comment_templates || []
             onClick={() => router.push(`/enviar/${slotId}`)}
             className="w-full bg-[#1DB954] text-black py-3 rounded-full font-bold"
           >
-            Resgatar R${empresaAtiva?.company_comment_templates?.length > 0 ? 4 : 3},00
+            Resgatar R${comentarioDoSlot ? 4 : 3},00
           </button>
         </Modal>
       )}
