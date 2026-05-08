@@ -30,6 +30,11 @@ type Comentario = {
 
 const [comentarioSelecionado, setComentarioSelecionado] = useState<Comentario | null>(null)
 const [comentarioDoSlot, setComentarioDoSlot] = useState<any>(null)
+const [referralProgress, setReferralProgress] = useState<any>(null)
+const [referralCode, setReferralCode] = useState<any>(null)
+const [profileData, setProfileData] = useState<any>(null)
+const [inviteCode, setInviteCode] = useState("")
+const [applyingInvite, setApplyingInvite] = useState(false)
 
   // 🔒 WHATSAPP (NÃO BLOQUEANTE)
   const [temWhatsapp, setTemWhatsapp] = useState<boolean | null>(null)
@@ -232,15 +237,40 @@ setSaldo(wallet?.saldo_disponivel || 0)
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, referred_by")
     .eq("id", user.id)
     .single()
+    setProfileData(profile)
 
+    
   // 🔥 SE FOR ADMIN, REDIRECIONA
   if (profile?.role === "admin") {
     router.replace("/painelsantz") // ou sua rota admin real
     return
   }
+
+  // 🔥 BUSCAR PROGRESSO
+const { data: progressData } = await supabase
+  .from("vw_referral_progress")
+  .select("*")
+  .eq("user_id", user.id)
+  .single()
+
+setReferralProgress(progressData)
+
+
+// 🔥 GARANTE CÓDIGO DE CONVITE
+const { data: codeData } = await supabase.rpc(
+  "garantir_codigo_convite",
+  {
+    p_user_id: user.id,
+  }
+)
+
+setReferralCode(codeData)
+console.log(progressData)
+console.log(codeData)
+
 
   // 🔒 SOMENTE COMENTADOR CONTINUA
   const { data: missao } = await supabase
@@ -369,6 +399,45 @@ await fetchEmpresas()
     return `${m}:${s.toString().padStart(2, "0")}`
   }
 
+  // CONVITE
+  async function aplicarConvite() {
+  if (!inviteCode.trim()) {
+    alert("Digite um código válido")
+    return
+  }
+
+  setApplyingInvite(true)
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    setApplyingInvite(false)
+    return
+  }
+
+  const { data, error } = await supabase.rpc(
+    "usar_codigo_convite",
+    {
+      p_code: inviteCode.trim(),
+      p_invited_user_id: user.id,
+    }
+  )
+
+  if (error) {
+    alert(error.message)
+    setApplyingInvite(false)
+    return
+  }
+
+  alert(data.message)
+
+  // 🔥 recarrega progresso
+  await init()
+
+  setInviteCode("")
+  setApplyingInvite(false)
+}
+
   return (
     <div className="min-h-screen bg-[#121212] text-white pb-28">
 <header className="py-6 px-4 flex items-center justify-between">
@@ -464,6 +533,106 @@ await fetchEmpresas()
           </div>
         </div>
       )}
+
+
+{/* 🎁 CONVITE */}
+{!profileData?.referred_by && (
+  <div className="mx-4 mb-6">
+    <div className="bg-[#1a1a1a] border border-blue-400/30 rounded-2xl p-4">
+
+      <p className="text-blue-400 font-semibold text-sm mb-1">
+        🎁 Possui um código de convite?
+      </p>
+
+      <p className="text-gray-400 text-xs mb-4">
+        Digite um código para entrar através de um convite.
+      </p>
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Digite o código"
+          value={inviteCode}
+          onChange={(e) =>
+            setInviteCode(
+              e.target.value.toUpperCase()
+            )
+          }
+          className="flex-1 bg-[#2a2a2a] rounded-xl px-4 text-sm outline-none"
+        />
+
+        <button
+          onClick={aplicarConvite}
+          disabled={applyingInvite}
+          className="bg-blue-500 hover:bg-blue-600 transition px-4 rounded-xl text-sm font-bold disabled:opacity-50"
+        >
+          {applyingInvite ? "..." : "Aplicar"}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+{/* 🚀 PROGRESSO DE CONVITES */}
+{referralCode && (
+  <div className="mx-4 mb-6">
+    <div className="bg-[#1a1a1a] border border-yellow-500/30 rounded-2xl p-4">
+
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <p className="text-yellow-400 font-bold text-sm">
+            {(referralProgress?.level || "Iniciante") === "Bronze" && "🥉 Bronze"}
+{(referralProgress?.level || "Iniciante") === "Prata" && "🥈 Prata"}
+{(referralProgress?.level || "Iniciante") === "Ouro" && "🥇 Ouro"}
+{(referralProgress?.level || "Iniciante") === "Iniciante" && "🚀 Iniciante"}
+          </p>
+
+          <p className="text-xs text-gray-400">
+            {referralProgress?.total_referrals || 0} convites válidos
+          </p>
+        </div>
+
+        <div className="text-right">
+          <p className="text-[10px] text-gray-500">
+            Próximo nível
+          </p>
+
+          <p className="text-xs text-white font-semibold">
+           {(referralProgress?.level || "Iniciante") === "Iniciante" && "Bronze • 3"}
+{(referralProgress?.level || "Iniciante") === "Bronze" && "Prata • 15"}
+{(referralProgress?.level || "Iniciante") === "Prata" && "Ouro • 30"}
+{(referralProgress?.level || "Iniciante") === "Ouro" && "Máximo"}
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-[#111] border border-[#2a2a2a] rounded-xl p-3 flex items-center justify-between">
+
+        <div>
+          <p className="text-[10px] text-gray-500 mb-1">
+            Seu código
+          </p>
+
+          <p className="font-bold tracking-wider text-white">
+            {referralCode.code}
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(referralCode.code)
+            alert("Código copiado!")
+          }}
+          className="bg-yellow-500 hover:bg-yellow-600 transition text-black text-xs font-bold px-4 py-2 rounded-xl"
+        >
+          Copiar
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
+
 
       {/* RESTANTE DO SEU DASHBOARD ORIGINAL SEGUE NORMAL AQUI */}
 
