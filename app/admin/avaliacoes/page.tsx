@@ -15,6 +15,20 @@ export default function Admin() {
     verificarAdmin()
   }, [])
 
+useEffect(() => {
+  function handleEsc(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      setImagemAtiva(null)
+    }
+  }
+
+  window.addEventListener("keydown", handleEsc)
+
+  return () => {
+    window.removeEventListener("keydown", handleEsc)
+  }
+}, [])
+
   async function verificarAdmin() {
     const {
       data: { user },
@@ -124,6 +138,7 @@ export default function Admin() {
 
         {lista.map((c) => {
 
+console.log(c)
           const ehNovo = new Date(c.data_envio).toDateString() === hoje
 
           return (
@@ -156,9 +171,16 @@ export default function Admin() {
                 </div>
 
                 <div className="text-sm text-gray-400 space-y-1">
-                  <p>Email: {c.email_usuario}</p>
-                  <p>Data: {new Date(c.data_envio).toLocaleString("pt-BR")}</p>
-                </div>
+  <p>Email: {c.email_usuario}</p>
+
+  {c.whatsapp && (
+    <p>WhatsApp: {c.whatsapp}</p>
+  )}
+
+  <p>
+    Data: {new Date(c.data_envio).toLocaleString("pt-BR")}
+  </p>
+</div>
 
                 {c.status === "enviado" ? (
                   <div className="flex gap-3 pt-2">
@@ -201,11 +223,23 @@ export default function Admin() {
       </div>
 
       {imagemAtiva && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+      <div
+  onClick={() => setImagemAtiva(null)}
+  className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 cursor-pointer"
+>
+
+<button
+  onClick={() => setImagemAtiva(null)}
+  className="absolute top-6 right-6 text-white text-4xl font-bold hover:scale-110 transition"
+>
+  ×
+</button>
+
           <img
-            src={imagemAtiva}
-            className="max-w-4xl max-h-[80vh] object-contain rounded-xl"
-          />
+  src={imagemAtiva}
+  onClick={(e) => e.stopPropagation()}
+  className="max-w-4xl max-h-[80vh] object-contain rounded-xl"
+/>
         </div>
       )}
 
