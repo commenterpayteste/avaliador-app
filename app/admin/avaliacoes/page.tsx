@@ -60,10 +60,14 @@ useEffect(() => {
     setLoading(false)
   }
 
-  const aprovar = async (slotId: string) => {
+  const aprovar = async (
+  slotId: string,
+  motivo?: string
+) => {
     const { error } = await supabase.rpc("aprovar_comentario", {
       p_slot_id: slotId,
       p_valor: 3,
+p_motivo: motivo || null,
     })
 
     if (error) {
@@ -74,13 +78,17 @@ useEffect(() => {
     verificarAdmin()
   }
 
-  const recusar = async (slotId: string) => {
+  const recusar = async (
+  slotId: string,
+  motivo?: string
+) => {
     const ok = confirm("Tem certeza que deseja recusar este comentário?")
     if (!ok) return
 
     const { error } = await supabase.rpc("recusar_comentario", {
-      p_slot_id: slotId,
-    })
+  p_slot_id: slotId,
+  p_motivo: motivo || null,
+})
 
     if (error) {
       alert(error.message)
@@ -189,7 +197,11 @@ console.log(c)
   const ok = confirm("Tem certeza que deseja APROVAR este comentário?")
   if (!ok) return
 
-  aprovar(c.slot_id)
+  const motivo = prompt(
+    "Observação da aprovação (opcional):"
+  )
+
+  aprovar(c.slot_id, motivo || undefined)
 }}
                       className="flex-1 bg-green-600 hover:bg-green-700 py-2 rounded-xl font-semibold"
                     >
@@ -197,7 +209,15 @@ console.log(c)
                     </button>
 
                     <button
-                      onClick={()=>recusar(c.slot_id)}
+                     onClick={() => {
+  const motivo = prompt(
+    "Motivo da recusa:"
+  )
+
+  if (!motivo) return
+
+  recusar(c.slot_id, motivo)
+}}
                       className="flex-1 bg-red-600 hover:bg-red-700 py-2 rounded-xl font-semibold"
                     >
                       Recusar

@@ -147,6 +147,34 @@ export default function EnviarComentario() {
         </div>
       )}
 
+{/* MINI TUTORIAL */}
+<div className="bg-[#111111] border border-yellow-500/30 rounded-2xl p-5 space-y-3">
+
+  <div className="flex items-center gap-2">
+    <span className="text-yellow-400 text-xl">⚠️</span>
+
+    <h2 className="font-bold text-yellow-400">
+      Dicas para evitar remoção do Google
+    </h2>
+  </div>
+
+  <ul className="text-sm text-gray-300 space-y-2 leading-relaxed">
+    <li>✔ Utilize nome e sobrenome na conta Google</li>
+
+    <li>✔ Use uma foto de perfil na conta Google</li>
+
+    <li>✔ Coloque alguns com 4,5 estrelas </li>
+
+    <li>✔ Não use contas com nomes aleatorios ou de jogos</li>
+
+    <li>✔ Evite comentários genéricos como “ótimo atendimento”</li>
+
+    <li>✔ Contas antigas possuem maior taxa de aprovação</li>
+
+  </ul>
+</div>
+
+
       {/* UPLOAD */}
 {/* UPLOAD BONITÃO */}
 <div className="bg-black rounded-2xl p-6 space-y-4 text-center border border-[#1f1f1f]">

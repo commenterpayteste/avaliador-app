@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 
 type Avaliacao = {
   id: string
+  admin_motivo?: string | null
   status: "enviado" | "aprovado" | "recusado"
   review_link: string | null
   created_at: string
@@ -15,6 +16,8 @@ type Avaliacao = {
 export default function Avaliacoes() {
   const [avaliacoes, setAvaliacoes] = useState<Avaliacao[]>([])
   const [loading, setLoading] = useState(true)
+  const [motivoAberto, setMotivoAberto] = useState<string | null>(null)
+  const [motivoModal, setMotivoModal] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -144,13 +147,24 @@ export default function Avaliacoes() {
                     )}
                   </span>
 
-                  <span
-                    className={`text-right text-xs font-semibold ${statusColor(
-                      a.status
-                    )}`}
-                  >
-                    {statusLabel(a.status)}
-                  </span>
+                  <div className="text-right">
+  <span
+    className={`text-xs font-semibold ${statusColor(
+      a.status
+    )}`}
+  >
+    {statusLabel(a.status)}
+  </span>
+
+ {a.admin_motivo && (
+  <button
+    onClick={() => setMotivoModal(a.admin_motivo || null)}
+    className="block text-[10px] text-yellow-400 underline mt-1 hover:text-white transition"
+  >
+    Ver motivo
+  </button>
+)}
+</div>
                 </div>
               ))}
             </div>
@@ -166,6 +180,34 @@ export default function Avaliacoes() {
           </button>
         </div>
       </div>
+
+{motivoModal && (
+  <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-4">
+    
+    <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-5 w-full max-w-sm">
+
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-white font-bold">
+          Motivo da análise
+        </h2>
+
+        <button
+          onClick={() => setMotivoModal(null)}
+          className="text-gray-400 hover:text-white text-2xl"
+        >
+          ✕
+        </button>
+      </div>
+
+      <p className="text-gray-300 text-sm leading-relaxed">
+        {motivoModal}
+      </p>
+
+    </div>
+
+  </div>
+)}
+
     </div>
   )
 }
