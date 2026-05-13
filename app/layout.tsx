@@ -34,6 +34,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               />
             </button>
 
+            {/* TUTORIAL */}
+<button onClick={() => router.push("/tutorial")}>
+  <img
+    src="/icons/play.png"
+    alt="Tutorial"
+    className={iconClass(isActive("/tutorial"))}
+  />
+</button>
+
             {/* AVALIAÇÕES / GANHOS */}
             <button onClick={() => router.push("/avaliacoes")}>
               <img
