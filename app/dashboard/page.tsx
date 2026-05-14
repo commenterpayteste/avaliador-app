@@ -312,6 +312,10 @@ console.log(codeData)
   .from("vw_empresas_disponiveis")
   .select("*")
 
+const { data: emBreve } = await supabase
+  .from("vw_empresas_em_breve")
+  .select("*")
+  
       // ADICIONADO AQUI 30-03
       const { data: testeComentarios } = await supabase
   .from("companies")
@@ -328,6 +332,7 @@ console.log(codeData)
 
     if (data) {
       setEmpresas(data)
+      setEmpresasEmBreve(emBreve || [])
       localStorage.setItem(CACHE_KEY, JSON.stringify(data))
     }
 
@@ -694,6 +699,7 @@ await fetchEmpresas()
             </>
           )}
 
+
           {!carregandoEmpresas &&
             empresas.map((e) => {
               
@@ -736,7 +742,57 @@ await fetchEmpresas()
             })
           }
 
-          {!carregandoEmpresas && (
+          {/* ⏳ EMPRESAS EM BREVE */}
+{!carregandoEmpresas &&
+  empresasEmBreve.length > 0 && (
+    <div className="pt-4">
+
+      <div className="flex items-center gap-2 mb-3">
+        <div className="h-px flex-1 bg-[#2a2a2a]" />
+
+        <p className="text-xs text-gray-500 uppercase tracking-widest">
+          Em breve
+        </p>
+
+        <div className="h-px flex-1 bg-[#2a2a2a]" />
+      </div>
+
+      <div className="space-y-3">
+
+        {empresasEmBreve.map((e) => (
+          <div
+            key={e.id}
+            className="bg-[#141414] border border-[#222] rounded-2xl p-4 opacity-70"
+          >
+
+            <div className="flex items-center justify-between">
+
+              <div>
+                <h2 className="font-semibold text-gray-400">
+                  {e.nome}
+                </h2>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  Novas vagas serão liberadas em breve
+                </p>
+              </div>
+
+              <div className="bg-[#1f1f1f] border border-[#333] text-gray-400 text-[10px] px-3 py-1 rounded-full">
+                ⏳ EM BREVE
+              </div>
+
+            </div>
+
+          </div>
+        ))}
+
+      </div>
+    </div>
+)}
+
+          {!carregandoEmpresas &&
+ empresas.length === 0 &&
+ empresasEmBreve.length === 0 && (
             <p className="text-xs text-yellow-400 text-center mt-6">
   ⚠️ Nenhuma avaliação disponível agora — novas vagas são liberadas ao longo do dia
 </p>
