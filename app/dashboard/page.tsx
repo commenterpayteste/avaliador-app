@@ -1012,9 +1012,34 @@ const comentarios = empresaAtiva.company_comment_templates || []
 
 <div className="text-sm text-gray-300 space-y-2 text-left">
   <p>1️⃣ Copie o comentário abaixo</p>
-  <p>2️⃣ Abra a empresa no botão abaixo</p>
+  <p>2️⃣ Desative a localização </p>
   <p>3️⃣ Cole exatamente o comentário</p>
-  <p>4️⃣ Não altere o texto</p>
+  <p>4️⃣ Prefira usar 4g ao invés de Wi-fi</p>
+</div>
+
+<div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-3 text-left">
+
+  <p className="text-yellow-400 text-xs font-bold mb-2">
+    ⚠ Evite Remoções
+  </p>
+
+  <div className="space-y-1 text-xs text-gray-300">
+
+    <p>
+      ✔ Desative a localização do celular antes de comentar
+    </p>
+
+    <p>
+      ✔ Prefira usar 4G/5G ao invés de Wi-Fi se possivel.
+    </p>
+
+
+    <p>
+      ✔ Não altere o comentário enviado
+    </p>
+
+  </div>
+
 </div>
 
 <div className="bg-[#111] border border-[#2a2a2a] p-2 rounded-xl text-xs text-gray-400">
