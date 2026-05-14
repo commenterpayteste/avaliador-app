@@ -7,6 +7,13 @@ export default function Admin() {
   const [comentarios, setComentarios] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [imagemAtiva, setImagemAtiva] = useState<string | null>(null)
+  const [advertenciaModal, setAdvertenciaModal] = useState(false)
+  const [advertenciaUserId, setAdvertenciaUserId] = useState<string | null>(null)
+  const [advertenciaTexto, setAdvertenciaTexto] = useState("")
+  const [advertenciaUsuario, setAdvertenciaUsuario] = useState("")
+const [advertenciaEmail, setAdvertenciaEmail] = useState("")
+const [advertenciaWhatsapp, setAdvertenciaWhatsapp] = useState("")
+const [advertenciaSlotId, setAdvertenciaSlotId] = useState<string | null>(null)
   const [aba, setAba] = useState<"pendentes" | "aprovadas" | "recusadas">("pendentes")
   const [busca, setBusca] = useState("")
   const router = useRouter()
@@ -97,6 +104,7 @@ p_motivo: motivo || null,
 
     verificarAdmin()
   }
+
 
   // 🔥 FILTROS (AGORA SEM QUEBRAR HOOKS)
   const pendentes = comentarios.filter(c => c.status === "enviado")
@@ -222,6 +230,27 @@ console.log(c)
                     >
                       Recusar
                     </button>
+
+<button
+  disabled={c.possui_advertencia}
+  onClick={() => {
+    setAdvertenciaUserId(c.user_id)
+    setAdvertenciaSlotId(c.slot_id)
+    setAdvertenciaUsuario(c.usuario)
+    setAdvertenciaEmail(c.email_usuario)
+    setAdvertenciaWhatsapp(c.whatsapp || "")
+    setAdvertenciaTexto("")
+    setAdvertenciaModal(true)
+  }}
+  className={`px-4 py-2 rounded-xl font-semibold transition ${
+    c.possui_advertencia
+      ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+      : "bg-yellow-500 hover:bg-yellow-600 text-black"
+  }`}
+>
+  {c.possui_advertencia ? "⚠✔" : "⚠"}
+</button>
+
                   </div>
                 ) : (
                   <span
@@ -234,6 +263,7 @@ console.log(c)
                     {c.status === "aprovado" ? "✔ Aprovado" : "✖ Recusado"}
                   </span>
                 )}
+
 
               </div>
             </div>
@@ -253,15 +283,141 @@ console.log(c)
   className="absolute top-6 right-6 text-white text-4xl font-bold hover:scale-110 transition"
 >
   ×
+
 </button>
+
+
 
           <img
   src={imagemAtiva}
   onClick={(e) => e.stopPropagation()}
   className="max-w-4xl max-h-[80vh] object-contain rounded-xl"
 />
+
         </div>
       )}
+
+      {/* ⚠ MODAL ADVERTÊNCIA */}
+{advertenciaModal && (
+  <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+
+    <div className="bg-[#141414] border border-[#2a2a2a] rounded-3xl w-full max-w-xl p-6 space-y-5">
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-yellow-400">
+          ⚠ Advertir usuário
+        </h2>
+
+        <button
+          onClick={() => setAdvertenciaModal(false)}
+          className="text-3xl text-gray-500 hover:text-white transition"
+        >
+          ×
+        </button>
+      </div>
+
+      <p className="text-sm text-gray-400">
+        Escolha uma advertência pronta ou personalize manualmente.
+      </p>
+
+      <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4">
+
+  <p className="text-xs text-gray-500 uppercase mb-2">
+    Usuário selecionado
+  </p>
+
+  <p className="font-semibold text-white">
+    {advertenciaUsuario}
+  </p>
+
+  <p className="text-sm text-gray-400">
+    {advertenciaEmail}
+  </p>
+
+{advertenciaWhatsapp && (
+  <p className="text-sm text-gray-500 mt-1">
+    WhatsApp: {advertenciaWhatsapp}
+  </p>
+)}
+
+</div>
+
+      <div className="grid gap-3">
+
+        {[
+          "Você usou a mesma conta para comentar várias vezes na mesma empresa.",
+
+          "Você está removendo e editando comentários.",
+
+          "Você está utilizando contas com nomes genéricos ou sem foto de perfil.",
+
+          "Você precisa trocar a conta do Google Maps.",
+
+          "Envio de prints muito semelhantes em contas diferentes."
+        ].map((item) => (
+
+          <button
+            key={item}
+            onClick={() => setAdvertenciaTexto(item)}
+            className={`text-left p-4 rounded-2xl border transition ${
+              advertenciaTexto === item
+                ? "border-yellow-500 bg-yellow-500/10"
+                : "border-[#2a2a2a] bg-[#1a1a1a] hover:border-yellow-500/40"
+            }`}
+          >
+            <p className="text-sm text-gray-200">
+              {item}
+            </p>
+          </button>
+
+        ))}
+
+      </div>
+
+      <textarea
+        value={advertenciaTexto}
+        onChange={(e) =>
+          setAdvertenciaTexto(e.target.value)
+        }
+        placeholder="Ou escreva uma advertência personalizada..."
+        className="w-full h-28 bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4 text-sm outline-none focus:border-yellow-500 resize-none"
+      />
+
+      <button
+        onClick={async () => {
+
+          if (!advertenciaTexto || !advertenciaUserId)
+            return
+
+          const { error } = await supabase.rpc(
+            "criar_advertencia",
+           {
+  p_user_id: advertenciaUserId,
+  p_motivo: advertenciaTexto,
+  p_motivo_tipo: "manual",
+  p_review_slot_id: advertenciaSlotId,
+}
+          )
+
+          if (error) {
+            alert(error.message)
+            return
+          }
+
+          setAdvertenciaModal(false)
+          verificarAdmin()
+
+          alert("Advertência aplicada com sucesso.")
+        }}
+        className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 rounded-2xl transition"
+      >
+        Aplicar advertência
+      </button>
+
+    </div>
+
+  </div>
+)}
 
     </div>
   )

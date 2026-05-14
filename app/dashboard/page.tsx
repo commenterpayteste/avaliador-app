@@ -36,6 +36,9 @@ const [referralCode, setReferralCode] = useState<any>(null)
 const [profileData, setProfileData] = useState<any>(null)
 const [mostrarTutorialPopup, setMostrarTutorialPopup] = useState(false)
 const [inviteCode, setInviteCode] = useState("")
+const [advertencias, setAdvertencias] = useState<any[]>([])
+const [mostrarPopupAdvertencia, setMostrarPopupAdvertencia] = useState(false)
+const [mostrarDetalhesAdvertencia, setMostrarDetalhesAdvertencia] = useState(false)
 const [applyingInvite, setApplyingInvite] = useState(false)
 
   // 🔒 WHATSAPP (NÃO BLOQUEANTE)
@@ -103,11 +106,72 @@ useEffect(() => {
     )
     .subscribe()
 
+
   return () => {
     supabase.removeChannel(channel)
   }
 }, [])
 
+
+useEffect(() => {
+
+  let warningChannel: any
+
+  async function iniciarRealtimeAdvertencias() {
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    warningChannel = supabase
+      .channel(`warnings-${user.id}`)
+
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_warnings",
+          filter: `user_id=eq.${user.id}`,
+        },
+
+        (payload) => {
+
+          const novaAdvertencia =
+            payload.new
+
+          setAdvertencias((prev) => [
+            novaAdvertencia,
+            ...prev,
+          ])
+
+          const jaViu =
+            localStorage.getItem(
+              `advertencia_${novaAdvertencia.id}`
+            )
+
+          if (!jaViu) {
+            setMostrarPopupAdvertencia(true)
+          }
+        }
+      )
+
+      .subscribe()
+  }
+
+  iniciarRealtimeAdvertencias()
+
+  return () => {
+    if (warningChannel) {
+      supabase.removeChannel(
+        warningChannel
+      )
+    }
+  }
+
+}, [])
 
   function gerarMensagem() {
   const nome = nomes[Math.floor(Math.random() * nomes.length)]
@@ -243,6 +307,36 @@ setSaldo(wallet?.saldo_disponivel || 0)
     .eq("id", user.id)
     .single()
     setProfileData(profile)
+
+
+  const {
+  data: warnings,
+  error: warningsError
+} = await supabase
+  .from("user_warnings")
+  .select("*")
+  .eq("user_id", user.id)
+  .order("created_at", {
+    ascending: false,
+  })
+
+console.log("WARNINGS:", warnings)
+console.log("WARNINGS ERROR:", warningsError)
+
+setAdvertencias(warnings || [])
+
+const ultimaAdvertencia = warnings?.[0]
+
+if (ultimaAdvertencia) {
+
+  const jaViu = localStorage.getItem(
+    `advertencia_${ultimaAdvertencia.id}`
+  )
+
+  if (!jaViu) {
+    setMostrarPopupAdvertencia(true)
+  }
+}
 
 const popupFechado =
   sessionStorage.getItem(
@@ -530,6 +624,43 @@ await fetchEmpresas()
           </a>
         </div>
       </div>
+
+      {/* ⚠ CARD ADVERTÊNCIAS */}
+{advertencias.length > 0 && (
+
+  <div className="mx-4 mb-6">
+
+    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4">
+
+      <div className="flex items-center justify-between gap-3">
+
+        <div>
+
+          <p className="text-yellow-400 font-bold text-sm">
+            ⚠ {advertencias.length} advertência{advertencias.length > 1 ? "s" : ""}
+          </p>
+
+          <p className="text-xs text-gray-400 mt-1">
+            Sua conta possui advertências registradas.
+          </p>
+
+        </div>
+
+        <button
+  onClick={() =>
+    setMostrarDetalhesAdvertencia(true)
+  }
+  className="bg-yellow-500 hover:bg-yellow-600 transition text-black text-xs font-bold px-4 py-2 rounded-xl"
+>
+  Ver detalhes
+</button>
+
+      </div>
+
+    </div>
+
+  </div>
+)}
 
       {/* ⚙️ AVISO WHATSAPP (SECUNDÁRIO) */}
       {temWhatsapp === false && (
@@ -1055,6 +1186,144 @@ const comentarios = empresaAtiva.company_comment_templates || []
         </button>
 
       </div>
+
+    </div>
+
+  </Modal>
+)}
+
+{/* ⚠ POPUP ADVERTÊNCIA */}
+{mostrarPopupAdvertencia &&
+ advertencias.length > 0 && (
+
+  <Modal>
+
+    <div className="space-y-4">
+
+      <div className="w-20 h-20 mx-auto rounded-full bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-center text-5xl">
+        ⚠
+      </div>
+
+      <div>
+        <h2 className="text-2xl font-bold text-yellow-400">
+          {advertencias[0].sequencia}ª Advertência
+        </h2>
+
+        <p className="text-sm text-gray-400 mt-2">
+          Sua conta recebeu uma advertência da equipe.
+        </p>
+      </div>
+
+      <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-4 text-left">
+
+        <p className="text-xs uppercase text-gray-500 mb-2">
+          Motivo
+        </p>
+
+        <p className="text-sm text-gray-200 leading-relaxed">
+          {advertencias[0].motivo}
+        </p>
+
+      </div>
+
+      <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-3">
+
+        <p className="text-xs text-green-300 leading-relaxed">
+          Você pode continuar avaliando normalmente.
+        </p>
+
+      </div>
+
+      <button
+        onClick={() => {
+
+          localStorage.setItem(
+            `advertencia_${advertencias[0].id}`,
+            "true"
+          )
+
+          setMostrarPopupAdvertencia(false)
+        }}
+        className="w-full bg-yellow-500 hover:bg-yellow-600 transition text-black font-bold py-3 rounded-2xl"
+      >
+        Entendi
+      </button>
+
+    </div>
+
+  </Modal>
+)}
+
+{/* ⚠ MODAL DETALHES ADVERTÊNCIA */}
+{mostrarDetalhesAdvertencia && (
+
+  <Modal>
+
+    <div className="space-y-4 text-left">
+
+      <div className="flex items-center justify-between">
+
+        <div>
+          <h2 className="text-xl font-bold text-yellow-400">
+            ⚠ Advertências
+          </h2>
+
+          <p className="text-xs text-gray-500 mt-1">
+            Histórico da sua conta
+          </p>
+        </div>
+
+        <button
+          onClick={() =>
+            setMostrarDetalhesAdvertencia(false)
+          }
+          className="text-2xl text-gray-500 hover:text-white"
+        >
+          ×
+        </button>
+
+      </div>
+
+      <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+
+        {advertencias.map((a, index) => (
+
+          <div
+            key={a.id}
+            className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-4"
+          >
+
+            <div className="flex items-center justify-between mb-2">
+
+              <p className="text-sm font-bold text-yellow-400">
+                ⚠ {a.sequencia}ª Advertência
+              </p>
+
+              <p className="text-[10px] text-gray-500">
+                {new Date(a.created_at)
+                  .toLocaleDateString("pt-BR")}
+              </p>
+
+            </div>
+
+            <p className="text-sm text-gray-300 leading-relaxed">
+              {a.motivo}
+            </p>
+
+          </div>
+
+        ))}
+
+      </div>
+
+      <button
+        onClick={() =>
+          setMostrarDetalhesAdvertencia(false)
+        }
+        className="w-full bg-yellow-500 hover:bg-yellow-600 transition text-black font-bold py-3 rounded-2xl"
+      >
+        Fechar
+      </button>
 
     </div>
 
