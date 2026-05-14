@@ -10,8 +10,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   const iconClass = (active: boolean) =>
     active
-      ? "w-6 h-6 brightness-0 invert"
-      : "w-6 h-6 opacity-60 hover:opacity-100 transition"
+    ? "w-6 h-6 brightness-0 invert"
+    : "w-6 h-6 opacity-90 hover:opacity-100 transition brightness-125"
 
   // 🔥 AQUI É O PULO DO GATO
   const hideMenu = path === "/" || path === "/login"

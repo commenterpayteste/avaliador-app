@@ -10,6 +10,7 @@ const CACHE_KEY = "empresas_cache"
 
 export default function Dashboard() {
   const [empresas, setEmpresas] = useState<any[]>([])
+  const [empresasEmBreve, setEmpresasEmBreve] = useState<any[]>([])
   const [saldo, setSaldo] = useState(0)
   const [notificacao, setNotificacao] = useState<string | null>(null) //notificacoes
   const [somAtivo, setSomAtivo] = useState(true)
@@ -33,6 +34,7 @@ const [comentarioDoSlot, setComentarioDoSlot] = useState<any>(null)
 const [referralProgress, setReferralProgress] = useState<any>(null)
 const [referralCode, setReferralCode] = useState<any>(null)
 const [profileData, setProfileData] = useState<any>(null)
+const [mostrarTutorialPopup, setMostrarTutorialPopup] = useState(false)
 const [inviteCode, setInviteCode] = useState("")
 const [applyingInvite, setApplyingInvite] = useState(false)
 
@@ -237,12 +239,25 @@ setSaldo(wallet?.saldo_disponivel || 0)
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, referred_by")
+    .select("role, referred_by, tutorial_visto")
     .eq("id", user.id)
     .single()
     setProfileData(profile)
 
-    
+const popupFechado =
+  sessionStorage.getItem(
+    "tutorial_popup_fechado"
+  )
+
+if (
+  !profile?.tutorial_visto &&
+  !popupFechado
+) {
+  setMostrarTutorialPopup(true)
+}
+
+  
+
   // 🔥 SE FOR ADMIN, REDIRECIONA
   if (profile?.role === "admin") {
     router.replace("/painelsantz") // ou sua rota admin real
@@ -916,6 +931,80 @@ const comentarios = empresaAtiva.company_comment_templates || []
           </div>
         </Modal>
       )}
+
+{/* 🎥 POPUP TUTORIAL */}
+{mostrarTutorialPopup && (
+  <Modal>
+
+    <div className="space-y-4">
+
+      <div className="space-y-2">
+        <h2 className="text-xl font-bold text-green-400">
+          🎥 Treinamento rápido
+        </h2>
+
+        <p className="text-sm text-gray-300 leading-relaxed">
+          Antes de começar a avaliar, assista o tutorial rápido para ter comentários aprovados.
+        </p>
+      </div>
+
+      <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-4">
+        <p className="text-xs text-gray-400 leading-relaxed">
+          ✔ Como ter mais empresas disponíveis
+          <br />
+          ✔ Como ter comentários aprovados
+          <br />
+          ✔ Como comentar do jeito certo
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+
+
+
+        <button
+          onClick={async () => {
+            sessionStorage.setItem(
+  "tutorial_popup_fechado",
+  "true"
+)
+
+            setMostrarTutorialPopup(false)
+          }}
+          className="flex-1 bg-[#2a2a2a] text-white py-3 rounded-2xl font-semibold"
+        >
+          Agora não
+        </button>
+
+        <button
+          onClick={async () => {
+            const { data: { user } } =
+              await supabase.auth.getUser()
+
+            if (user) {
+              await supabase
+                .from("profiles")
+                .update({
+                  tutorial_visto: true,
+                })
+                .eq("id", user.id)
+            }
+
+            setMostrarTutorialPopup(false)
+            router.push("/tutorial")
+          }}
+          className="flex-1 bg-green-400 text-black py-3 rounded-2xl font-bold"
+        >
+          Ver tutorial
+        </button>
+
+      </div>
+
+    </div>
+
+  </Modal>
+)}
+      
       {/* 🔥 ZAP BUTTON */}
 <a
   href="https://wa.me/82996265512"

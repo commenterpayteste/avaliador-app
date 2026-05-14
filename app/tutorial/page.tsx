@@ -20,7 +20,7 @@ export default function TutorialPage() {
         {/* HERO */}
         <div className="bg-[#0d0d0d] border border-green-500/20 rounded-3xl p-6 space-y-3">
           <h1 className="text-3xl font-black leading-tight">
-            🎥 Aprenda a evitar remoções do Google
+            🎥 Aprenda a evitar comentários reprovados
           </h1>
 
           <p className="text-gray-400 text-sm leading-relaxed">
@@ -37,7 +37,7 @@ export default function TutorialPage() {
     </h2>
 
     <p className="text-sm text-gray-400 mt-1">
-      Aprenda rapidamente como evitar remoções do Google.
+      Aprenda rapidamente como melhorar sua conta.
     </p>
   </div>
 
@@ -88,13 +88,13 @@ export default function TutorialPage() {
         {/* ALERTA */}
         <div className="bg-[#151515] border border-yellow-500/20 rounded-3xl p-5 space-y-3">
           <h2 className="text-yellow-400 font-bold">
-            ⚠️ Evite comportamento em massa
+            ⚠️ Evite comportamento irregulares
           </h2>
 
           <ul className="space-y-2 text-sm text-gray-300">
-            <li>• Não comente várias empresas seguidas</li>
+            <li>• Não delete ou edite comentários</li>
             <li>• Evite contas recém criadas</li>
-            <li>• Navegue no Google Maps antes de comentar</li>
+            <li>• Use as contas do Google Maps normalmente</li>
             <li>• Comentários naturais possuem maior permanência</li>
           </ul>
         </div>

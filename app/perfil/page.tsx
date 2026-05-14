@@ -60,6 +60,10 @@ setSaldo(wallet?.saldo_disponivel || 0)
   {/* BOTÃO SAIR */}
   <button
   onClick={async () => {
+    sessionStorage.removeItem(
+  "tutorial_popup_fechado"
+)
+
     await supabase.auth.signOut()
     router.push("/login")
   }}
