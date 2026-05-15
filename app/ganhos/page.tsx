@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import PenaltyGate from "@/components/PenaltyGate"
 
 type Wallet = {
   saldo_disponivel: number
@@ -122,6 +123,7 @@ const [ganhosHoje, setGanhosHoje] = useState(0)
   }
 
   return (
+    <PenaltyGate> 
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#111] px-4 py-8 text-white">
 
       {/* 🔙 VOLTAR */}
@@ -237,5 +239,6 @@ const [ganhosHoje, setGanhosHoje] = useState(0)
         )}
       </div>
     </div>
+    </PenaltyGate>
   )
 }

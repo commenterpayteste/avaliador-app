@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import PenaltyGate from "@/components/PenaltyGate"
 
 type Avaliacao = {
   id: string
@@ -70,6 +71,7 @@ export default function Avaliacoes() {
   }
 
   return (
+    <PenaltyGate> 
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#111] flex justify-center px-4 py-10">
       <div className="w-full max-w-md space-y-6">
 
@@ -209,5 +211,6 @@ export default function Avaliacoes() {
 )}
 
     </div>
+    </PenaltyGate>
   )
 }

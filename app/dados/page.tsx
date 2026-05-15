@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import PenaltyGate from "@/components/PenaltyGate"
 
 type Perfil = {
   nome: string | null
@@ -118,6 +119,8 @@ export default function Dados() {
   }
 
   return (
+
+    <PenaltyGate>
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b0b] to-[#111] px-4 pt-6 pb-28 text-white">
 
       <button
@@ -254,6 +257,7 @@ export default function Dados() {
         <img src="/icons/seguranca.png" alt="Seguro" className="h-6" />
       </div>
     </div>
+    </PenaltyGate>
   )
 }
 

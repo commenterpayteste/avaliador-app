@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useParams, useRouter } from "next/navigation"
+import PenaltyGate from "@/components/PenaltyGate"
 
 const TEMPO_MAX = 10 * 60
 
@@ -127,6 +128,8 @@ export default function EnviarComentario() {
   }
 
   return (
+
+    <PenaltyGate> 
     <div className="min-h-screen bg-[#0b0b0b] text-white px-6 py-8 max-w-xl mx-auto space-y-6">
 
       {/* TIMER */}
@@ -282,5 +285,6 @@ export default function EnviarComentario() {
   {enviando ? "Enviando..." : "Enviar para análise"}
 </button>
     </div>
+    </PenaltyGate>
   )
 }

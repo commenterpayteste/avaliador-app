@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
+import { usePenalty } from "@/app/hooks/usePenaltys"
+import PenaltyGate from "@/components/PenaltyGate"
 
 type Etapa = "idle" | "popup1" | "confirmar" | "popup2" | "tempo_esgotado"
 
@@ -48,6 +50,11 @@ const [applyingInvite, setApplyingInvite] = useState(false)
   const [salvandoZap, setSalvandoZap] = useState(false)
 
   const router = useRouter()
+const {
+  penaltyAtiva,
+  loadingPenalty,
+} = usePenalty()
+
 
   const nomes = [
   "João", "Maria", "Carlos", "Ana", "Pedro",
@@ -325,6 +332,9 @@ console.log("WARNINGS ERROR:", warningsError)
 
 setAdvertencias(warnings || [])
 
+
+
+
 const ultimaAdvertencia = warnings?.[0]
 
 if (ultimaAdvertencia) {
@@ -550,9 +560,14 @@ await fetchEmpresas()
 
   setInviteCode("")
   setApplyingInvite(false)
+  
 }
 
   return (
+
+    <PenaltyGate>
+
+    
     <div className="min-h-screen bg-[#121212] text-white pb-28">
 <header className="py-6 px-4 flex items-center justify-between">
   
@@ -571,6 +586,7 @@ await fetchEmpresas()
       R$ {saldo.toFixed(2)}
     </p>
   </div>
+
 </header>
 
 {notificacao && (
@@ -624,6 +640,7 @@ await fetchEmpresas()
           </a>
         </div>
       </div>
+
 
       {/* ⚠ CARD ADVERTÊNCIAS */}
 {advertencias.length > 0 && (
@@ -1072,7 +1089,7 @@ const comentarios = empresaAtiva.company_comment_templates || []
         }}
         className="w-full bg-green-500 text-black py-3 rounded-xl font-bold disabled:opacity-50"
       >
-        {copiado ? "Iniciar Avaliaçã e Ganhar" : "Copie o comentário primeiro"}
+        {copiado ? "Iniciar Avaliação e Ganhar" : "Copie o comentário primeiro"}
       </button>
     </>
   )}
@@ -1251,13 +1268,17 @@ const comentarios = empresaAtiva.company_comment_templates || []
 
       </div>
 
-      <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-3">
+      <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-3">
 
-        <p className="text-xs text-green-300 leading-relaxed">
-          Você pode continuar avaliando normalmente.
-        </p>
+  <p className="text-xs text-red-300 leading-relaxed">
 
-      </div>
+    {advertencias[0].sequencia === 1
+      ? "Seu acesso foi suspenso por 2 horas. Na próxima advertência sua conta será bloqueada."
+      : "Sua conta foi bloqueada pela equipe."}
+
+  </p>
+
+</div>
 
       <button
         onClick={() => {
@@ -1368,6 +1389,7 @@ const comentarios = empresaAtiva.company_comment_templates || []
   />
 </a>
     </div>
+    </PenaltyGate>
   )
 }
 
@@ -1380,6 +1402,7 @@ function LoadingCard() {
       <div className="h-3 w-1/3 bg-[#2a2a2a] rounded mb-4" />
       <div className="h-10 w-full bg-[#2a2a2a] rounded-full" />
     </div>
+    
   )
 }
 
