@@ -99,6 +99,7 @@ export default function AdminLayout({
           <Item href="/admin/empresas" label="Empresas" />
           <Item href="/admin/pagamentos" label="Pagamentos" />
           <Item href="/admin/packages" label="Packages" />
+          <Item href="/admin/anti-fraude" label="Fraudes" />
         </nav>
       </aside>
 

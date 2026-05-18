@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabaseClient"
 import { useRouter } from "next/navigation"
 import { usePenalty } from "@/app/hooks/usePenaltys"
 import PenaltyGate from "@/components/PenaltyGate"
+import { saveDevice } from "@/lib/saveDevice"
 
 type Etapa = "idle" | "popup1" | "confirmar" | "popup2" | "tempo_esgotado"
 
@@ -39,6 +40,7 @@ const [profileData, setProfileData] = useState<any>(null)
 const [mostrarTutorialPopup, setMostrarTutorialPopup] = useState(false)
 const [inviteCode, setInviteCode] = useState("")
 const [advertencias, setAdvertencias] = useState<any[]>([])
+const [multiAccountFlag, setMultiAccountFlag] = useState<any>(null)
 const [mostrarPopupAdvertencia, setMostrarPopupAdvertencia] = useState(false)
 const [mostrarDetalhesAdvertencia, setMostrarDetalhesAdvertencia] = useState(false)
 const [applyingInvite, setApplyingInvite] = useState(false)
@@ -76,6 +78,7 @@ const valores = [3, 6, 9, 12, 15, 18, 21, 30, 45, 69, 105]
 
 useEffect(() => {
   init()
+  saveDevice()
   verificarWhatsapp()
 
 
@@ -296,10 +299,14 @@ if (localStorage.getItem("som_notificacao") !== "off") {
 async function init() {
   const { data: { user } } = await supabase.auth.getUser()
 
+
   if (!user) {
     router.push("/login")
     return
   }
+
+  console.log("USER LOGADO:", user.id)
+  
 const { data: wallet } = await supabase
   .from("wallets")
   .select("saldo_disponivel")
@@ -332,8 +339,22 @@ console.log("WARNINGS ERROR:", warningsError)
 
 setAdvertencias(warnings || [])
 
+const { data: multiFlag } = await supabase
+  .from("anti_fraud_flags")
+  .select("*")
+  .eq("user_id", user.id)
+  .eq("tipo", "multi_account")
+  .eq("resolvido", false)
+  .order("created_at", {
+    ascending: false,
+  })
+  .maybeSingle()
 
-
+setMultiAccountFlag(multiFlag)
+console.log(
+  "MULTI FLAG:",
+  multiFlag
+)
 
 const ultimaAdvertencia = warnings?.[0]
 
@@ -678,6 +699,40 @@ await fetchEmpresas()
 
   </div>
 )}
+
+{/* 🚨 MULTI-CONTA */}
+{multiAccountFlag && (
+
+  <div className="mx-4 mb-6">
+
+    <div className="bg-orange-500/10 border border-orange-500/30 rounded-2xl p-4">
+
+      <p className="text-orange-400 font-bold text-sm mb-2">
+        🚨 Múltiplas contas detectadas
+      </p>
+
+      <p className="text-xs text-gray-300 leading-relaxed">
+
+        Identificamos o uso de mais de uma conta neste dispositivo.
+
+        <br /><br />
+
+        Para reduzir risco de remoções das avaliações e ganhos no Google Maps:
+
+        <br />
+        • Utilize 4g ou outra rede Wi-Fi
+        <br />
+        • Evite usar conta nova no google, opte por contas antigas
+        <br />
+        • Prefira usar outros telefones além desse.
+      </p>
+
+    </div>
+
+  </div>
+
+)}
+
 
       {/* ⚙️ AVISO WHATSAPP (SECUNDÁRIO) */}
       {temWhatsapp === false && (
