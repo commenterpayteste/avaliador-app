@@ -24,6 +24,8 @@ type EmpresaAdmin = {
   total_aprovado: number
   total_em_analise: number
   ativa: boolean
+  liberacao_progressiva: boolean
+max_vagas_simultaneas: number
   created_at: string
 }
 
@@ -54,6 +56,15 @@ export default function AdminEmpresas() {
   const [pacote, setPacote] = useState<number | "">("")
   const [limiteDiario, setLimiteDiario] = useState<number | "">("")
   const [ativaNova, setAtivaNova] = useState(true)
+  const [
+  liberacaoProgressivaNova,
+  setLiberacaoProgressivaNova
+] = useState(false)
+
+const [
+  maxSimultaneasNova,
+  setMaxSimultaneasNova
+] = useState(5)
   const [loading, setLoading] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
   const [sucesso, setSucesso] = useState(false)
@@ -124,6 +135,11 @@ ${
       p_pacote_limite: pacote,
       p_limite_diario: limiteDiario,
       p_ativa: ativaNova,
+      p_liberacao_progressiva:
+  liberacaoProgressivaNova,
+
+p_max_vagas_simultaneas:
+  maxSimultaneasNova,
     })
 
     setLoading(false)
@@ -246,6 +262,47 @@ ${
             <Input label="Link Google Maps" value={link} onChange={setLink} />
             <Input label="Pacote total" type="number" value={pacote} onChange={(v) => setPacote(Number(v))} />
             <Input label="Limite diário" type="number" value={limiteDiario} onChange={(v) => setLimiteDiario(Number(v))} />
+
+            <div className="flex items-center justify-between bg-[#1c1f26] border border-[#2a2a2a] rounded-xl px-4 py-3 mt-2">
+
+  <span className="text-sm text-gray-300">
+    Liberação progressiva
+  </span>
+
+  <button
+    onClick={() =>
+      setLiberacaoProgressivaNova(
+        !liberacaoProgressivaNova
+      )
+    }
+    type="button"
+    className={`px-4 py-1 rounded-full text-xs font-semibold transition ${
+      liberacaoProgressivaNova
+        ? "bg-green-500 text-black"
+        : "bg-red-500 text-black"
+    }`}
+  >
+    {liberacaoProgressivaNova
+      ? "Ativa"
+      : "Desligada"}
+  </button>
+
+</div>
+
+{liberacaoProgressivaNova && (
+
+  <Input
+    label="Máximo simultâneas"
+    type="number"
+    value={maxSimultaneasNova}
+    onChange={(v) =>
+      setMaxSimultaneasNova(
+        Number(v)
+      )
+    }
+  />
+
+)}
 
 {/* COMENTÁRIOS PERSONALIZADOS MEXI AQUI*/}
 <div className="bg-[#1c1f26] border border-[#2a2a2a] rounded-xl p-4 space-y-3">
@@ -395,6 +452,53 @@ ${
           <Input label="Link" value={editando.link_maps} onChange={(v) => setEditando({ ...editando, link_maps: v })} />
           <Input label="Pacote" type="number" value={editando.pacote_limite} onChange={(v) => setEditando({ ...editando, pacote_limite: Number(v) })} />
           <Input label="Limite diário" type="number" value={editando.limite_diario} onChange={(v) => setEditando({ ...editando, limite_diario: Number(v) })} />
+
+{/* LIBERAÇÃO PROGRESSIVA */}
+
+<div className="flex items-center justify-between bg-[#1c1f26] border border-[#2a2a2a] rounded-xl px-4 py-3 mt-2">
+
+  <span className="text-sm text-gray-300">
+    Liberação progressiva
+  </span>
+
+  <button
+    onClick={() =>
+      setEditando({
+        ...editando,
+        liberacao_progressiva:
+          !editando.liberacao_progressiva,
+      })
+    }
+    type="button"
+    className={`px-4 py-1 rounded-full text-xs font-semibold transition ${
+      editando.liberacao_progressiva
+        ? "bg-green-500 text-black"
+        : "bg-red-500 text-black"
+    }`}
+  >
+    {editando.liberacao_progressiva
+      ? "Ativa"
+      : "Desligada"}
+  </button>
+
+</div>
+
+{editando.liberacao_progressiva && (
+
+  <Input
+    label="Máximo simultâneas"
+    type="number"
+    value={editando.max_vagas_simultaneas}
+    onChange={(v) =>
+      setEditando({
+        ...editando,
+        max_vagas_simultaneas:
+          Number(v),
+      })
+    }
+  />
+
+)}
 
           {/* STATUS EDITAR */}
           <div className="flex items-center justify-between bg-[#1c1f26] border border-[#2a2a2a] rounded-xl px-4 py-3 mt-2">
