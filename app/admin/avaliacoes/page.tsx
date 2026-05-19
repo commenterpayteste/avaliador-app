@@ -198,6 +198,26 @@ console.log(c)
   </p>
 </div>
 
+{c.total_contas_device > 1 && (
+
+  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-3 mt-3">
+
+    <p className="text-yellow-400 font-semibold text-sm">
+
+      ⚠ {c.total_contas_device} contas no mesmo dispositivo
+
+    </p>
+
+    <p className="text-gray-400 text-xs mt-1 break-all">
+
+      {c.fingerprint}
+
+    </p>
+
+  </div>
+
+)}
+
                 {c.status === "enviado" ? (
                   <div className="flex gap-3 pt-2">
                     <button
